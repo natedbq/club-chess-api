@@ -7,8 +7,7 @@ namespace ChessApi.configuration
     {
         public AutoMapperProfile()
         {
-            CreateMap<Study, SimpleStudy>()
-                .ForMember(dest => dest.FEN, opt => opt.MapFrom(src => src.Continuation.Position.Move.FEN));
+            CreateMap<Study, SimpleStudy>();
         }
     }
 }

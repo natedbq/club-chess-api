@@ -10,8 +10,9 @@
         public Guid Id { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
-        public Continuation Continuation { get; set; }
+        public Position Position { get; set; }
         public Color Perspective { get; set; }
+        public string SummaryFEN { get; set; }
     }
 
     public class SimpleStudy: IStudy
@@ -20,6 +21,6 @@
         public string Title { get; set; }
         public string Description { get; set; }
         public Color Perspective { get; set; }
-        public string FEN { get; set; }
+        public string SummaryFEN { get; set; }
     }
 }
