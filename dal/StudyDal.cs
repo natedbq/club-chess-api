@@ -76,7 +76,7 @@ namespace ChessApi.dal
                                                                         Title = "",
                                                                         Tags = new List<string>(),
                                                                         Description = "",
-                                                                        Move = new Move("rnbqkbnr/pp2pppp/8/2ppP3/3P4/8/PPP2PPP/RNBQKBNR b KQkq - 0 3","c5")
+                                                                        Move = new Move("rnbqkbnr/pp2pppp/8/2ppP3/3P4/8/PPP2PPP/RNBQKBNR w KQkq - 0 3","c5")
                                                                     }
                                                                 }
                                                             },
