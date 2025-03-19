@@ -121,7 +121,6 @@ namespace ChessApi.dal
                             }
                         }
                     },
-                    SummaryFEN = "rnbqkbnr/pp1ppppp/2p5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
                     Perspective = Color.Black
                 },
                 //new Study()
