@@ -1,17 +1,31 @@
-﻿using chess.api.models;
+﻿using chess.api.dal;
+using chess.api.models;
 
 namespace ChessApi.dal
 {
     public class StudyDal
     {
+        private readonly Context Context;
+
+
+        public StudyDal()
+        {
+            Context = new Context("D:\\projects\\data\\chess-game");
+        }
+
         public IList<Study> GetStudies()
         {
-            return _studyList.ToList();
+            return Context.LoadAll();
         }
 
         public Study GetById(Guid id)
         {
-            return _studyList.ToList().FirstOrDefault(s => s.Id == id);
+            return Context.Load(id);
+        }
+
+        public void Save(Study study)
+        {
+            Context.Save(study);
         }
 
         private static IList<Study> _studyList = new List<Study>()
