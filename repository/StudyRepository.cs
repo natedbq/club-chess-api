@@ -7,6 +7,13 @@ namespace chess.api.repository
     {
         private StudyDal dal = new StudyDal();
 
+        public void Save(Study study)
+        {
+            dal.Save(study);
+        }
+
+
+
         public IList<Study> GetStub()
         {
             return dal.GetStudies();

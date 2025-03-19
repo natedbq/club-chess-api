@@ -3,6 +3,7 @@ using chess.api.models;
 using chess.api.repository;
 using ChessApi.repository;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace HealthTrackerApi.Controllers
 {
@@ -19,6 +20,13 @@ namespace HealthTrackerApi.Controllers
             _logger = logger;
             studyRepo = new StudyRepository();
             simpleStudyRepo = new SimpleStudyRepository();
+        }
+
+        [HttpPost]
+        public HttpStatusCode SaveStudy([FromBody] Study study)
+        {
+            studyRepo.Save(study);
+            return HttpStatusCode.NoContent;
         }
 
         [HttpGet("SimpleStudies")]
