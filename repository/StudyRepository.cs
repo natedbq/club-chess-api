@@ -12,7 +12,10 @@ namespace chess.api.repository
             dal.Save(study);
         }
 
-
+        public void Delete(Guid id)
+        {
+            dal.Delete(id);
+        }
 
         public IList<Study> GetStub()
         {

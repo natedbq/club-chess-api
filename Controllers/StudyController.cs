@@ -29,6 +29,13 @@ namespace HealthTrackerApi.Controllers
             return HttpStatusCode.NoContent;
         }
 
+        [HttpPost("delete/{id}")]
+        public HttpStatusCode DeleteStudy(Guid id)
+        {
+            studyRepo.Delete(id);
+            return HttpStatusCode.NoContent;
+        }
+
         [HttpGet("SimpleStudies")]
         public IList<SimpleStudy> GetSimpleStudies()
         {

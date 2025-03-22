@@ -23,6 +23,11 @@ namespace ChessApi.dal
             return Context.Load(id);
         }
 
+        public void Delete(Guid id)
+        {
+            Context.Delete(id);
+        }
+
         public void Save(Study study)
         {
             Context.Save(study);
