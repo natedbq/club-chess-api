@@ -23,6 +23,11 @@ namespace ChessApi.dal
             return Context.Load(id);
         }
 
+        public void Delete(Guid id)
+        {
+            Context.Delete(id);
+        }
+
         public void Save(Study study)
         {
             Context.Save(study);
@@ -121,7 +126,6 @@ namespace ChessApi.dal
                             }
                         }
                     },
-                    SummaryFEN = "rnbqkbnr/pp1ppppp/2p5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
                     Perspective = Color.Black
                 },
                 //new Study()
