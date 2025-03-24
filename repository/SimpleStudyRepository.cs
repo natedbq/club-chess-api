@@ -9,7 +9,7 @@ namespace ChessApi.repository
     {
         private StudyDal dal = new StudyDal();
 
-        public IList<SimpleStudy> GetStub()
+        public IList<SimpleStudy> GetStudies()
         {
             var studies = dal.GetStudies();
             var mapper = new Mapper(new MapperConfiguration(cfg =>

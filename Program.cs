@@ -1,5 +1,7 @@
 
 
+using chess.api.services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -24,6 +26,7 @@ builder.Services.AddCors(options =>
                 .AllowAnyMethod()
                 .AllowAnyHeader());
 });
+
 
 var app = builder.Build();
 
