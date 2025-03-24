@@ -28,6 +28,11 @@ namespace chess.api.dal
             catch ( Exception ex ) { }
         }
 
+        public void Delete(Guid id)
+        {
+            File.Delete(Path.Join(_dataDirectory, $"{id}.json"));
+        }
+
         public IList<Study> LoadAll()
         {
             IList<Study> studies = new List<Study>();
