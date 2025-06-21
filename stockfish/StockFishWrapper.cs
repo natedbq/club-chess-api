@@ -1,47 +1,18 @@
-# src
-Setting up database
-https://stackoverflow.com/questions/1933134/add-iis-7-apppool-identities-as-sql-server-logons
-Will have to add appPool as an identity
-	- make sure to assign sysadmin role
-	- map to chess database
-	- can just copy the normal user login to be sure it works as intended
+﻿using System.Diagnostics;
 
-
-
-from chatgpt
-class Program
-{
-    static async Task Main()
-    {
-        var engine = new StockfishEngine();
-        engine.Start(@"C:\path\to\stockfish.exe");
-
-        string fen = "r1bqkbnr/pppppppp/n7/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 2 2";
-        string result = await engine.EvaluatePosition(fen, depth: 15);
-        Console.WriteLine("Stockfish output: " + result);
-
-        engine.Stop();
-    }
-}
-
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Threading.Tasks;
-
-class StockfishEngine
+class StockfishWrapper
 {
     private Process engineProcess;
     private StreamWriter engineInput;
     private StreamReader engineOutput;
 
-    public void Start(string pathToStockfish)
+    public void Start()
     {
         engineProcess = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = pathToStockfish,
+                FileName = "D:\\projects\\chess-game\\stockfish\\stockfish.exe",
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
@@ -59,21 +30,22 @@ class StockfishEngine
         engineInput.WriteLine("uci");
         await WaitForOutput("uciok");
 
+        engineInput.WriteLine("setoption name MultiPV value 1");
         engineInput.WriteLine($"position fen {fen}");
         engineInput.WriteLine($"go depth {depth}");
 
-        string bestMove = "";
+        string eval = "";
         while (true)
         {
             var line = await engineOutput.ReadLineAsync();
-            if (line.Contains("bestmove"))
+            if (line.StartsWith($"info depth {depth}") && line.Contains(" cp "))
             {
-                bestMove = line;
+                eval = line.Substring(line.IndexOf("cp ")).Split(" ")[1];
                 break;
             }
         }
 
-        return bestMove;
+        return eval;
     }
 
     private async Task WaitForOutput(string expected)
@@ -91,3 +63,4 @@ class StockfishEngine
         engineInput.WriteLine("quit");
         engineProcess.Close();
     }
+}

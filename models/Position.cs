@@ -9,5 +9,6 @@
         public Guid? ParentId { get; set; }
         public IList<Position> Positions { get; set; }
         public Move Move { get; set; }
+        public string Plans { get; set; }
     }
 }
