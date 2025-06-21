@@ -1,36 +1,155 @@
-﻿using chess.api.dal;
+﻿using chess.api.configuration;
+using chess.api.dal;
 using chess.api.models;
+using chess.api.services;
+using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace ChessApi.dal
 {
     public class StudyDal
     {
-        private readonly Context Context;
+        private readonly string _sqlConnectionString;
 
 
         public StudyDal()
         {
-            Context = new Context("D:\\projects\\data\\chess-game");
+            //Context = new Context("D:\\projects\\data\\chess-game");
+            _sqlConnectionString = "Server=localhost\\SQLEXPRESS;Database=chess;Trusted_Connection=True;TrustServerCertificate=True";
         }
 
         public IList<Study> GetStudies()
         {
-            return Context.LoadAll();
+            var studies = new List<Study>();
+            var query = "Select id,title,summaryFEN,description,positionId,perspective from Study";
+
+
+            using(var connection = new SqlConnection(_sqlConnectionString))
+            {
+                connection.Open();
+                using(var command = new SqlCommand(query, connection))
+                {
+                    using(var reader = command.ExecuteReader())
+                    {
+                        while(reader.Read())
+                        {
+                            var study = new Study();
+                            study.Id = reader.GetGuid(0);
+                            study.Title = reader.GetString(1).Trim();
+                            study.SummaryFEN = reader.GetString(2).Trim();
+                            study.Description = reader.IsDBNull(3) ? null : reader.GetString(3).Trim();
+                            study.Position = new Position();
+                            study.Position.Id = reader.GetGuid(4);
+                            study.Perspective = (Color)reader.GetInt32(5);
+                            studies.Add(study);
+                        }
+                    }
+                }
+                connection.Close();
+            }
+
+            return studies;
         }
 
         public Study GetById(Guid id)
         {
-            return Context.Load(id);
+            using (var connection = new SqlConnection(_sqlConnectionString))
+            {
+                var query = "Select id,title,summaryFEN,description,positionId,perspective from Study where id = @id";
+                query = query.Replace("@id", id.SqlOrNull());
+
+                connection.Open();
+
+                using(var command = new SqlCommand(query, connection))
+                {
+                    using(var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            var study = new Study();
+                            study.Id = reader.GetGuid(0);
+                            study.Title = reader.GetString(1).Trim();
+                            study.SummaryFEN = reader.GetString(2).Trim();
+                            study.Description = reader.IsDBNull(3) ? null : reader.GetString(3).Trim();
+                            study.Perspective = (Color)reader.GetInt32(5);
+                            study.PositionId = reader.GetGuid(4);
+
+                            return study;
+                        }
+                    }
+                }
+
+                connection.Close();
+            }
+            return null;
         }
 
         public void Delete(Guid id)
         {
-            Context.Delete(id);
+            var query = $"delete from Study where id = '{id.ToString()}'";
+
+            using (var connection = new SqlConnection(_sqlConnectionString))
+            {
+                connection.Open();
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.ExecuteNonQuery();
+                }
+                connection.Close();
+            }
         }
 
-        public void Save(Study study)
+        public async Task Save(Study study)
         {
-            Context.Save(study);
+            var exists = false;
+            using (var connection = new SqlConnection(_sqlConnectionString))
+            {
+                await connection.OpenAsync();
+                var query = "select * from study where id = @id".Replace("@id", study.Id.SqlOrNull());
+                using(var command = new SqlCommand(query, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        exists = reader.Read();
+                        reader.Close();
+                    }
+                }
+
+                if (exists)
+                {
+                    Update(study, connection);
+                }
+                else
+                {
+                    New(study, connection);
+                }
+
+                connection.Close();
+            }
+        }
+
+        private void New(Study study, SqlConnection connection)
+        {
+            var query = $"insert into Study (id, title, summaryFen, description, positionId, perspective) " +
+                $"values ('{study.Id}','{study.Title}','{study.SummaryFEN}','{study.Description}','{study.PositionId.Value}',{(int)study.Perspective})";
+            using (var command = new SqlCommand(query, connection))
+            {
+                command.ExecuteNonQuery();
+            }
+
+        }
+
+        private void Update(Study study, SqlConnection connection)
+        {
+            var query = $"update study set description=@description,summaryFEN=@summaryFEN where id = @id"
+                .Replace("@description",study.Description.SqlOrNull())
+                .Replace("@summaryFEN",study.SummaryFEN.SqlOrNull())
+                .Replace("@id",study.Id.SqlOrNull());
+            using (var command = new SqlCommand(query, connection))
+            {
+                command.ExecuteNonQuery();
+            }
         }
 
         private static IList<Study> _studyList = new List<Study>()

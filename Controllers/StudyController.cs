@@ -23,9 +23,9 @@ namespace HealthTrackerApi.Controllers
         }
 
         [HttpPost]
-        public HttpStatusCode SaveStudy([FromBody] Study study)
+        public async Task<HttpStatusCode> SaveStudy([FromBody] Study study)
         {
-            studyRepo.Save(study);
+            await studyRepo.Save(study);
             return HttpStatusCode.NoContent;
         }
 
@@ -39,13 +39,21 @@ namespace HealthTrackerApi.Controllers
         [HttpGet("SimpleStudies")]
         public IList<SimpleStudy> GetSimpleStudies()
         {
-            return simpleStudyRepo.GetStub();
-        }
-
-        [HttpGet("Studies")]
-        public IList<Study> GetStudies()
-        {
-            return studyRepo.GetStub();
+            try
+            {
+                return simpleStudyRepo.GetStudies();
+            }
+            catch(Exception ex)
+            {
+                return new List<SimpleStudy>()
+                {
+                    new SimpleStudy()
+                    {
+                        Description = ex.Message
+                    }
+                };
+            }
+            return new List<SimpleStudy>();
         }
 
 

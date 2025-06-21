@@ -8,7 +8,8 @@ namespace ChessApi.configuration
         public AutoMapperProfile()
         {
             CreateMap<Study, SimpleStudy>()
-                .ForMember(dest => dest.SummaryFEN,opt => opt.MapFrom((src) => GetSummaryFEN(src)));
+                //.ForMember(dest => dest.SummaryFEN,opt => opt.MapFrom((src) => GetSummaryFEN(src)))
+                ;
         }
 
         private string GetSummaryFEN(Study study)
