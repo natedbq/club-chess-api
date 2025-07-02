@@ -8,6 +8,7 @@ namespace ChessApi.configuration
         public AutoMapperProfile()
         {
             CreateMap<Study, SimpleStudy>()
+                .ForMember(dest => dest.LastStudied, opt => opt.MapFrom((src) => src.Position == null ? DateTime.Now : src.Position.LastStudied))
                 //.ForMember(dest => dest.SummaryFEN,opt => opt.MapFrom((src) => GetSummaryFEN(src)))
                 ;
         }

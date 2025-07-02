@@ -34,5 +34,17 @@ namespace chess.api.Controllers
             return result;
         }
 
+        [HttpGet("engine")]
+        public async Task<Dictionary<string, string>> Engine([FromQuery] string fen, [FromQuery] int depth = 20)
+        {
+            _stockfishWrapper.Start();
+
+
+            var result = await _stockfishWrapper.EngineMoves(fen, depth);
+
+            _stockfishWrapper.Stop();
+
+            return result;
+        }
     }
 }

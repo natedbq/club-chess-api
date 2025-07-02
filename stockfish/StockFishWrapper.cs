@@ -25,6 +25,44 @@ class StockfishWrapper
         engineOutput = engineProcess.StandardOutput;
     }
 
+    public async Task<Dictionary<string, string>> EngineMoves(string fen, int depth = 15)
+    {
+        engineInput.WriteLine("uci");
+        await WaitForOutput("uciok");
+
+        engineInput.WriteLine("setoption name MultiPV value 4");
+        engineInput.WriteLine($"position fen {fen}");
+        engineInput.WriteLine($"go depth {depth}");
+
+        Stopwatch watch = Stopwatch.StartNew();
+        watch.Start();
+
+        string eval = "";
+        var lines = new Dictionary<string, string>();
+        while (true)
+        {
+            var line = await engineOutput.ReadLineAsync();
+            if (line.StartsWith($"info depth {depth}") && line.Contains(" cp "))
+            {
+                var multipv = line.Substring(line.IndexOf("multipv ")).Split(" ")[1];
+                eval = line.Substring(line.IndexOf("cp ")).Split(" ")[1];
+                if (!lines.ContainsKey(multipv))
+                {
+                    lines.Add(multipv, line);
+                    eval += line + "\n";
+                }
+                if(lines.Count() >= 4)
+                {
+                    break;
+                }
+            }
+        }
+            
+        watch.Stop();
+
+        return lines;
+    }
+
     public async Task<string> EvaluatePosition(string fen, int depth = 15)
     {
         engineInput.WriteLine("uci");

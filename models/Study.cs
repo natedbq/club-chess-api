@@ -23,5 +23,6 @@
         public string Description { get; set; }
         public Color Perspective { get; set; }
         public string SummaryFEN { get; set; }
+        public DateTime LastStudied { get; set; }
     }
 }

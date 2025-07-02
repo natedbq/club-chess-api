@@ -21,7 +21,14 @@ namespace chess.api.dal
                 var query = GenerateSaveInstructions(position,  connection);
                 using (var command = new SqlCommand(query, connection))
                 {
-                    await command.ExecuteNonQueryAsync();
+                    try
+                    {
+                        await command.ExecuteNonQueryAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        var t = ex.Message;
+                    }
                 }
                 connection.Close();
             }
@@ -68,7 +75,7 @@ namespace chess.api.dal
         private Position PrivateGetById(Guid id, SqlConnection sqlConnection, int depth = 0)
         {
             var position = new Position();
-            var query = "select id,title,description,moveName,moveFEN,parentId,move_from,move_to,plans from Position where id = @id";
+            var query = "select id,title,description,moveName,moveFEN,parentId,move_from,move_to,plans,tags,isKeyPosition,lastStudied,mistakes from Position where id = @id";
             query = query.Replace("@id", id.SqlOrNull());
 
             using(var command = new SqlCommand(query, sqlConnection))
@@ -80,14 +87,18 @@ namespace chess.api.dal
                         position.Tags = new List<string>();
 
                         position.Id = reader.GetGuid(0);
-                        position.Title = reader.IsDBNull(1) ? null : reader.GetString(1).Trim();
-                        position.Description = reader.IsDBNull(2) ? null : reader.GetString(2).Trim();
+                        position.Title = reader.IsDBNull(1) ? "" : reader.GetString(1).Trim();
+                        position.Description = reader.IsDBNull(2) ? "" : reader.GetString(2).Trim();
                         position.Move = new Move(reader.GetString(4).Trim(), reader.GetString(3).Trim());
                         position.Move.From = reader.IsDBNull(6) ? "" :  reader.GetString(6).Trim();
                         position.Move.To = reader.IsDBNull(7) ? "" : reader.GetString(7).Trim();
                         position.ParentId = reader.IsDBNull(5) ? null : reader.GetGuid(5);
                         position.Positions = new List<Position>();
                         position.Plans = reader.IsDBNull(8) ? "" : reader.GetString(8).Trim();
+                        position.Tags = reader.IsDBNull(9) ? new List<string>() : reader.GetString(9).Trim().Split(",").ToList();
+                        position.IsKeyPosition = reader.IsDBNull(10) ? false : reader.GetInt32(10) == 1;
+                        position.LastStudied = reader.IsDBNull(11) ? DateTime.Now : reader.GetDateTime(11);
+                        position.Mistakes = reader.IsDBNull(12) ? 0 : reader.GetInt64(12);
                     }
                     else
                     {
@@ -148,8 +159,8 @@ namespace chess.api.dal
 
         private string New(Position position)
         {
-            var query = "insert into Position (id,title,description,moveName,moveFEN,parentId,move_from,move_to,plans) "
-                + "values ('@id',@title,@description,@moveName,@moveFEN,@parentId,@from,@to,@plans);\n";
+            var query = ("insert into Position (id,title,description,moveName,moveFEN,parentId,move_from,move_to,plans,tags,isKeyPosition,lastStudied,mistakes) "
+                + "values ('@id',@title,@description,@moveName,@moveFEN,@parentId,@from,@to,@plans,@tags,@isKeyPosition,@lastStudied,@mistakes);\n");
             query = query.Replace("@id", position.Id.ToString())
                 .Replace("@title", position.Title.SqlOrNull())
                 .Replace("@description", position.Description.SqlOrNull())
@@ -158,20 +169,29 @@ namespace chess.api.dal
                 .Replace("@parentId", position.ParentId.SqlOrNull())
                 .Replace("@from", position.Move.From.SqlOrNull())
                 .Replace("@to", position.Move.To.SqlOrNull())
-                .Replace("@plans", position.Plans.SqlOrNull());
+                .Replace("@plans", position.Plans.SqlOrNull())
+                .Replace("@tags", string.Join(",", position.Tags).SqlOrNull())
+                .Replace("@isKeyPosition", position.IsKeyPosition ? "1" : "0")
+                .Replace("@lastStudied", position.LastStudied.SqlOrNull())
+                .Replace("@mistakes", position.Mistakes.ToString());
 
             return query;
         }
 
         private string Update(Position position)
         {
-            var query = "update position set title=@title,description=@description,move_from=@from,move_to=@to,plans=@plans where id = @id;\n"
+            var query = ("update position set title=@title,description=@description,move_from=@from,move_to=@to,plans=@plans,tags=@tags,isKeyPosition=@isKeyPosition,"
+                +"lastStudied=@lastStudied,mistakes=@mistakes where id = @id;\n")
                 .Replace("@title", position.Title.SqlOrNull())
                 .Replace("@description", position.Description.SqlOrNull())
                 .Replace("@id", position.Id.SqlOrNull())
                 .Replace("@from", position.Move.From.SqlOrNull())
                 .Replace("@to", position.Move.To.SqlOrNull())
-                .Replace("@plans", position.Plans.SqlOrNull());
+                .Replace("@plans", position.Plans.SqlOrNull())
+                .Replace("@tags", string.Join(",", position.Tags).SqlOrNull())
+                .Replace("@isKeyPosition", position.IsKeyPosition ? "1" : "0")
+                .Replace("@lastStudied", position.LastStudied.SqlOrNull())
+                .Replace("@mistakes", position.Mistakes.ToString());
 
             return query;
         }

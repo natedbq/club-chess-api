@@ -29,6 +29,16 @@ namespace HealthTrackerApi.Controllers
             return HttpStatusCode.NoContent;
         }
 
+        [HttpPut("{id}/study")]
+        public HttpStatusCode Study(Guid id)
+        {
+            var study = studyRepo.GetStudyById(id);
+            study.Position.LastStudied = DateTime.Now;
+            studyRepo.Save(study);
+            
+            return HttpStatusCode.NoContent;
+        }
+
         [HttpPost("delete/{id}")]
         public HttpStatusCode DeleteStudy(Guid id)
         {

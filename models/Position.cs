@@ -10,5 +10,8 @@
         public IList<Position> Positions { get; set; }
         public Move Move { get; set; }
         public string Plans { get; set; }
+        public bool IsKeyPosition { get; set; }
+        public DateTime LastStudied { get; set; }
+        public long Mistakes { get; set; }
     }
 }

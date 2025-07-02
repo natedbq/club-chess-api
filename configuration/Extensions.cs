@@ -29,5 +29,14 @@
 
             return $"'{guid}'";
         }
+        public static string SqlOrNull(this DateTime date)
+        {
+            if (date == default(DateTime))
+            {
+                return "null";
+            }
+
+            return $"'{date.ToString()}'";
+        }
     }
 }

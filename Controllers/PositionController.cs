@@ -21,6 +21,35 @@ namespace chess.api.Controllers
             positionRepo = new PositionRepository();
         }
 
+        [HttpPut("{id}/study")]
+        public HttpStatusCode StudyPosition(Guid id)
+        {
+            var position = positionRepo.GetById(id);
+            position.LastStudied = DateTime.Now;
+            positionRepo.Save(position);
+
+            return HttpStatusCode.NoContent;
+        }
+
+        [HttpPut("{id}/mistake")]
+        public HttpStatusCode MistakePosition(Guid id)
+        {
+            var position = positionRepo.GetById(id);
+            position.Mistakes += 1;
+            positionRepo.Save(position);
+
+            return HttpStatusCode.NoContent;
+        }
+        [HttpPut("{id}/correct")]
+        public HttpStatusCode CorrectPosition(Guid id)
+        {
+            var position = positionRepo.GetById(id);
+            position.Mistakes = Math.Max(position.Mistakes - 1, 0);
+            positionRepo.Save(position);
+
+            return HttpStatusCode.NoContent;
+        }
+
         [HttpPost("delete/{id}")]
         public HttpStatusCode DeletePosition(Guid id)
         {

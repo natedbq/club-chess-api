@@ -39,8 +39,7 @@ namespace ChessApi.dal
                             study.Title = reader.GetString(1).Trim();
                             study.SummaryFEN = reader.GetString(2).Trim();
                             study.Description = reader.IsDBNull(3) ? null : reader.GetString(3).Trim();
-                            study.Position = new Position();
-                            study.Position.Id = reader.GetGuid(4);
+                            study.PositionId = reader.GetGuid(4);
                             study.Perspective = (Color)reader.GetInt32(5);
                             studies.Add(study);
                         }
