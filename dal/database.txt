@@ -1,0 +1,27 @@
+create table Club (
+	Id uniqueIdentifier,
+	Name Varchar(60),
+	Description Varchar(max),
+	Owner uniqueIdentifier
+);
+
+create table StudyClub (
+	StudyId uniqueIdentifier,
+	ClubId uniqueIdentifier
+)
+
+create table [User] (
+	Id uniqueIdentifier,
+	Username varchar(25),
+	Password varchar(50)
+);
+
+create table ClubUser (
+	ClubId uniqueIdentifier,
+	UserId uniqueIdentifier
+);
+
+create table StudyUser (
+	StudyId uniqueIdentifier,
+	UserId uniqueIdentifier
+);

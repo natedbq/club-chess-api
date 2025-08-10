@@ -13,5 +13,6 @@
         public bool IsKeyPosition { get; set; }
         public DateTime LastStudied { get; set; }
         public long Mistakes { get; set; }
+        public bool IsActive { get; set; }
     }
 }

@@ -9,7 +9,12 @@
                 return "null";
             }
 
-            return $"'{str}'";
+            return $"'{str.Replace("'", "''")}'";
+        }
+        public static string SqlOrNull(this bool b)
+        {
+
+            return b ? "1" : "0";
         }
         public static string SqlOrNull(this Guid? guid)
         {

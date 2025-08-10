@@ -46,12 +46,12 @@ namespace HealthTrackerApi.Controllers
             return HttpStatusCode.NoContent;
         }
 
-        [HttpGet("SimpleStudies")]
-        public IList<SimpleStudy> GetSimpleStudies()
+        [HttpGet("SimpleStudies/{userId}")]
+        public IList<SimpleStudy> GetSimpleStudies(Guid userId)
         {
             try
             {
-                return simpleStudyRepo.GetStudies();
+                return simpleStudyRepo.GetStudies(userId);
             }
             catch(Exception ex)
             {

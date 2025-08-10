@@ -1,6 +1,9 @@
 
 
 using chess.api.services;
+using ChessApi.dal;
+using ChessApi.repository;
+using System.Runtime.CompilerServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,3 +51,6 @@ app.MapControllers();
 app.UseCors("AllowAngularApp");
 
 app.Run();
+
+var simpleStudyRepo = new SimpleStudyRepository();
+simpleStudyRepo.GetStudies();

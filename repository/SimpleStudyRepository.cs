@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using chess.api.common;
 using chess.api.dal;
 using chess.api.models;
 using ChessApi.configuration;
@@ -11,9 +12,11 @@ namespace ChessApi.repository
         private StudyDal dal = new StudyDal();
         private PositionDal positionDal = new PositionDal();
 
-        public IList<SimpleStudy> GetStudies()
+
+
+        public IList<SimpleStudy> GetStudies(Guid userId = default(Guid))
         {
-            var studies = dal.GetStudies();
+            var studies = dal.GetStudies(userId);
             var mapper = new Mapper(new MapperConfiguration(cfg =>
             {
                 cfg.AddProfile<AutoMapperProfile>();
@@ -24,7 +27,18 @@ namespace ChessApi.repository
                 study.Position = positionDal.GetById(study.PositionId.Value);
             }
 
-            return mapper.Map<IList<SimpleStudy>>(studies);
+            var simps = mapper.Map<IList<SimpleStudy>>(studies);
+
+            foreach(var simp in simps)
+            {
+                if(simp.Score == -1)
+                {
+                    simp.Score = StudyAccuracyCache.GetAccuracy(simp.Id);
+                    dal.UpdateScore(simp.Id, simp.Score);
+                }
+            }
+
+            return simps;
         }
     }
 }

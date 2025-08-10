@@ -75,7 +75,7 @@ namespace chess.api.dal
         private Position PrivateGetById(Guid id, SqlConnection sqlConnection, int depth = 0)
         {
             var position = new Position();
-            var query = "select id,title,description,moveName,moveFEN,parentId,move_from,move_to,plans,tags,isKeyPosition,lastStudied,mistakes from Position where id = @id";
+            var query = "select id,title,description,moveName,moveFEN,parentId,move_from,move_to,plans,tags,isKeyPosition,lastStudied,mistakes,isActive from Position where id = @id";
             query = query.Replace("@id", id.SqlOrNull());
 
             using(var command = new SqlCommand(query, sqlConnection))
@@ -99,6 +99,7 @@ namespace chess.api.dal
                         position.IsKeyPosition = reader.IsDBNull(10) ? false : reader.GetInt32(10) == 1;
                         position.LastStudied = reader.IsDBNull(11) ? DateTime.Now : reader.GetDateTime(11);
                         position.Mistakes = reader.IsDBNull(12) ? 0 : reader.GetInt64(12);
+                        position.IsActive = reader.IsDBNull(13) ? true : reader.GetInt32(13) == 1;
                     }
                     else
                     {
@@ -159,8 +160,8 @@ namespace chess.api.dal
 
         private string New(Position position)
         {
-            var query = ("insert into Position (id,title,description,moveName,moveFEN,parentId,move_from,move_to,plans,tags,isKeyPosition,lastStudied,mistakes) "
-                + "values ('@id',@title,@description,@moveName,@moveFEN,@parentId,@from,@to,@plans,@tags,@isKeyPosition,@lastStudied,@mistakes);\n");
+            var query = ("insert into Position (id,title,description,moveName,moveFEN,parentId,move_from,move_to,plans,tags,isKeyPosition,lastStudied,mistakes,isActive) "
+                + "values ('@id',@title,@description,@moveName,@moveFEN,@parentId,@from,@to,@plans,@tags,@isKeyPosition,@lastStudied,@mistakes,@isActive);\n");
             query = query.Replace("@id", position.Id.ToString())
                 .Replace("@title", position.Title.SqlOrNull())
                 .Replace("@description", position.Description.SqlOrNull())
@@ -171,9 +172,10 @@ namespace chess.api.dal
                 .Replace("@to", position.Move.To.SqlOrNull())
                 .Replace("@plans", position.Plans.SqlOrNull())
                 .Replace("@tags", string.Join(",", position.Tags).SqlOrNull())
-                .Replace("@isKeyPosition", position.IsKeyPosition ? "1" : "0")
+                .Replace("@isKeyPosition", position.IsKeyPosition.SqlOrNull())
                 .Replace("@lastStudied", position.LastStudied.SqlOrNull())
-                .Replace("@mistakes", position.Mistakes.ToString());
+                .Replace("@mistakes", position.Mistakes.ToString())
+                .Replace("@isActive", position.IsActive.SqlOrNull());
 
             return query;
         }
@@ -181,7 +183,7 @@ namespace chess.api.dal
         private string Update(Position position)
         {
             var query = ("update position set title=@title,description=@description,move_from=@from,move_to=@to,plans=@plans,tags=@tags,isKeyPosition=@isKeyPosition,"
-                +"lastStudied=@lastStudied,mistakes=@mistakes where id = @id;\n")
+                + "lastStudied=@lastStudied,mistakes=@mistakes,isActive=@isActive where id = @id;\n")
                 .Replace("@title", position.Title.SqlOrNull())
                 .Replace("@description", position.Description.SqlOrNull())
                 .Replace("@id", position.Id.SqlOrNull())
@@ -189,9 +191,10 @@ namespace chess.api.dal
                 .Replace("@to", position.Move.To.SqlOrNull())
                 .Replace("@plans", position.Plans.SqlOrNull())
                 .Replace("@tags", string.Join(",", position.Tags).SqlOrNull())
-                .Replace("@isKeyPosition", position.IsKeyPosition ? "1" : "0")
+                .Replace("@isKeyPosition", position.IsKeyPosition.SqlOrNull())
                 .Replace("@lastStudied", position.LastStudied.SqlOrNull())
-                .Replace("@mistakes", position.Mistakes.ToString());
+                .Replace("@mistakes", position.Mistakes.ToString())
+                .Replace("@isActive", position.IsActive.SqlOrNull());
 
             return query;
         }

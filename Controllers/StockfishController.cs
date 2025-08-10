@@ -22,12 +22,12 @@ namespace chess.api.Controllers
 
 
         [HttpGet("eval")]
-        public async Task<string> Eval([FromQuery] string fen, [FromQuery] int depth = 20)
+        public async Task<SinglePointEval> Eval([FromQuery] string fen, [FromQuery] int depth = 20)
         {
             _stockfishWrapper.Start();
 
 
-            string result = await _stockfishWrapper.EvaluatePosition(fen, depth);
+            var result = await _stockfishWrapper.EvaluatePosition(fen, depth);
 
             _stockfishWrapper.Stop();
 
@@ -35,7 +35,7 @@ namespace chess.api.Controllers
         }
 
         [HttpGet("engine")]
-        public async Task<Dictionary<string, string>> Engine([FromQuery] string fen, [FromQuery] int depth = 20)
+        public async Task<Evaluation> Engine([FromQuery] string fen, [FromQuery] int depth = 20)
         {
             _stockfishWrapper.Start();
 

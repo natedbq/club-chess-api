@@ -1,10 +1,12 @@
-﻿using chess.api.configuration;
+﻿using chess.api.common;
+using chess.api.configuration;
 using chess.api.dal;
 using chess.api.models;
 using chess.api.services;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using System.Reflection.PortableExecutable;
 
 namespace ChessApi.dal
 {
@@ -19,10 +21,15 @@ namespace ChessApi.dal
             _sqlConnectionString = "Server=localhost\\SQLEXPRESS;Database=chess;Trusted_Connection=True;TrustServerCertificate=True";
         }
 
-        public IList<Study> GetStudies()
+        public IList<Study> GetStudies(Guid userId = default(Guid))
         {
             var studies = new List<Study>();
-            var query = "Select id,title,summaryFEN,description,positionId,perspective from Study";
+            var query = "Select id,title,summaryFEN,description,positionId,perspective,tags,focus_tags,score from Study";
+
+            if(userId != default(Guid))
+            {
+                query += $" where id in (select studyId from StudyUser where UserId = {userId.SqlOrNull()});";
+            }
 
 
             using(var connection = new SqlConnection(_sqlConnectionString))
@@ -41,6 +48,9 @@ namespace ChessApi.dal
                             study.Description = reader.IsDBNull(3) ? null : reader.GetString(3).Trim();
                             study.PositionId = reader.GetGuid(4);
                             study.Perspective = (Color)reader.GetInt32(5);
+                            study.Tags = reader.IsDBNull(6) ? new List<string>() : reader.GetString(6).Trim().Split(",");
+                            study.FocusTags = reader.IsDBNull(7) ? new List<string>() : reader.GetString(7).Trim().Split(",");
+                            study.Score = reader.IsDBNull(8) ? 0 : reader.GetDouble(8);
                             studies.Add(study);
                         }
                     }
@@ -53,9 +63,10 @@ namespace ChessApi.dal
 
         public Study GetById(Guid id)
         {
+            Study study = null;
             using (var connection = new SqlConnection(_sqlConnectionString))
             {
-                var query = "Select id,title,summaryFEN,description,positionId,perspective from Study where id = @id";
+                var query = "Select id,title,summaryFEN,description,positionId,perspective,tags,focus_tags,score from Study where id = @id";
                 query = query.Replace("@id", id.SqlOrNull());
 
                 connection.Open();
@@ -66,22 +77,25 @@ namespace ChessApi.dal
                     {
                         if (reader.Read())
                         {
-                            var study = new Study();
+                            study = new Study();
                             study.Id = reader.GetGuid(0);
                             study.Title = reader.GetString(1).Trim();
                             study.SummaryFEN = reader.GetString(2).Trim();
                             study.Description = reader.IsDBNull(3) ? null : reader.GetString(3).Trim();
-                            study.Perspective = (Color)reader.GetInt32(5);
                             study.PositionId = reader.GetGuid(4);
-
-                            return study;
+                            study.Perspective = (Color)reader.GetInt32(5);
+                            study.Tags = reader.IsDBNull(6) ? new List<string>() : reader.GetString(6).Split(",");
+                            study.FocusTags = reader.IsDBNull(7) ? new List<string>() : reader.GetString(7).Trim().Split(",");
+                            study.Score = reader.IsDBNull(8) ? 0 : reader.GetDouble(8);
                         }
                     }
                 }
 
                 connection.Close();
             }
-            return null;
+
+            StudyAccuracyCache.Invalidate(id);
+            return study;
         }
 
         public void Delete(Guid id)
@@ -130,8 +144,9 @@ namespace ChessApi.dal
 
         private void New(Study study, SqlConnection connection)
         {
-            var query = $"insert into Study (id, title, summaryFen, description, positionId, perspective) " +
-                $"values ('{study.Id}','{study.Title}','{study.SummaryFEN}','{study.Description}','{study.PositionId.Value}',{(int)study.Perspective})";
+            var query = $"insert into Study (id, title, summaryFen, description, positionId, perspective,tags,focus_tags,score) " +
+                $"values ('{study.Id}',{study.Title.SqlOrNull()},'{study.SummaryFEN}','{study.Description}','{study.PositionId.Value}',{(int)study.Perspective}," 
+                + $" {string.Join(",", study.Tags).SqlOrNull()}, {string.Join(",", study.FocusTags).SqlOrNull()},{study.Score})";
             using (var command = new SqlCommand(query, connection))
             {
                 command.ExecuteNonQuery();
@@ -139,12 +154,28 @@ namespace ChessApi.dal
 
         }
 
+        public void UpdateScore(Guid id, double score)
+        {
+            using (var connection = new SqlConnection(_sqlConnectionString))
+            {
+                connection.Open();
+                var query = $"update study set score={score} where id = {id.SqlOrNull()}";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
         private void Update(Study study, SqlConnection connection)
         {
-            var query = $"update study set description=@description,summaryFEN=@summaryFEN where id = @id"
+            var query = $"update study set description=@description,summaryFEN=@summaryFEN,tags=@tags,focus_tags=@focus_tags,score=@score where id = @id"
                 .Replace("@description",study.Description.SqlOrNull())
                 .Replace("@summaryFEN",study.SummaryFEN.SqlOrNull())
-                .Replace("@id",study.Id.SqlOrNull());
+                .Replace("@tags", string.Join(",", study.Tags).SqlOrNull())
+                .Replace("@id",study.Id.SqlOrNull())
+                .Replace("@score",study.Score.ToString())
+                .Replace("@focus_tags", string.Join(",", study.FocusTags).SqlOrNull());
             using (var command = new SqlCommand(query, connection))
             {
                 command.ExecuteNonQuery();

@@ -14,6 +14,9 @@
         public Guid? PositionId { get; set; }
         public Color Perspective { get; set; }
         public string SummaryFEN { get; set; }
+        public double Score { get; set; }
+        public IList<string> Tags { get; set; }
+        public IList<string> FocusTags { get; set; }
     }
 
     public class SimpleStudy: IStudy
@@ -24,5 +27,8 @@
         public Color Perspective { get; set; }
         public string SummaryFEN { get; set; }
         public DateTime LastStudied { get; set; }
+        public double Score { get; set; }
+        public IList<string> Tags { get; set; }
+        public IList<string> FocusTags { get; set; }
     }
 }
