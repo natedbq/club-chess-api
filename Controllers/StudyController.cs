@@ -1,4 +1,5 @@
 ﻿
+using chess.api.common;
 using chess.api.models;
 using chess.api.repository;
 using ChessApi.repository;
@@ -14,12 +15,20 @@ namespace HealthTrackerApi.Controllers
         private readonly ILogger<StudyController> _logger;
         private readonly StudyRepository studyRepo;
         private readonly SimpleStudyRepository simpleStudyRepo;
+        private readonly PortStudyToUser portStudyTo = new PortStudyToUser();
 
         public StudyController(ILogger<StudyController> logger)
         {
             _logger = logger;
             studyRepo = new StudyRepository();
             simpleStudyRepo = new SimpleStudyRepository();
+        }
+
+        [HttpPost("{studyId}/import/{userId}")]
+        public HttpStatusCode Import(Guid userId, Guid studyId)
+        {
+            portStudyTo.PortToUser(studyId, userId);
+            return HttpStatusCode.NoContent;
         }
 
         [HttpPost]

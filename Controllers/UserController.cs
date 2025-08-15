@@ -14,7 +14,6 @@ namespace chess.api.Controllers
     {
         private readonly ILogger<UserController> _logger;
         private readonly UserDal userDal = new UserDal();
-        private readonly PortStudyToUser portStudyTo = new PortStudyToUser();
 
         public UserController(ILogger<UserController> logger)
         {
@@ -33,13 +32,6 @@ namespace chess.api.Controllers
         {
             var userId = await userDal.CreateUser(user, user.Password);
             return userId;
-        }
-
-        [HttpPost("{userId}/importStudy/{studyId}")]
-        public HttpStatusCode Import(Guid userId, Guid studyId)
-        {
-            portStudyTo.PortToUser(studyId, userId);
-            return HttpStatusCode.NoContent;
         }
 
         [HttpPost("auth")]

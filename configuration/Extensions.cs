@@ -43,5 +43,14 @@
 
             return $"'{date.ToString()}'";
         }
+        public static string SqlOrNull(this DateTimeOffset date)
+        {
+            if (date == default(DateTimeOffset))
+            {
+                return "null";
+            }
+
+            return $"'{date.ToString()}'";
+        }
     }
 }

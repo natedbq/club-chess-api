@@ -26,7 +26,9 @@ namespace chess.api.common
             {
                 connection.Open();
 
-                var query = "select * from UserStudyStats where id = @id".Replace("@id", studyId.SqlOrNull());
+                var query = "select * from UserStudyStats where studyId = @id and userId = @userId"
+                    .Replace("@id", studyId.SqlOrNull())
+                    .Replace("@userId", userId.SqlOrNull());
                 using (var command = new SqlCommand(query, connection))
                 {
                     using (var reader = command.ExecuteReader())
@@ -45,10 +47,10 @@ namespace chess.api.common
             using (var connection = new SqlConnection(_sqlConnectionString))
             {
                 var exists = UserHasStudy(studyId, userId);
-                connection.Open();
 
                 if (!exists)
                 {
+                    connection.Open();
                     var study = _studyDal.GetById(studyId);
 
                     var importStudyStatement = $"insert into UserStudyStats (studyId, userId, lastStudied, Accuracy) values ({studyId.SqlOrNull()},{userId.SqlOrNull()},{DateTime.Now.SqlOrNull()}, -1);";
@@ -59,15 +61,15 @@ namespace chess.api.common
                     }
 
 
-                    var position = _positionDal.GetById(study.PositionId.Value, userId, 40);
+                    var position = _positionDal.GetById(study.PositionId.Value, depth: 100);
 
-                    var list = GenerateInserts(position, userId);
+                    var list = GenerateInserts(studyId, position, userId);
 
-                    var chunkSize = 200;
+                    var chunkSize = 50;
                     for(int i = 0; i < list.Count; i += chunkSize)
                     {
                         var part = list.Skip(i).Take(chunkSize);
-                        var insertStatememnt = "insert into UserPositionStats (positionId, userId, mistakes, lastStudied) values "
+                        var insertStatememnt = "insert into UserPositionStats (positionId, userId, studyId, mistakes, lastStudied) values "
                             + string.Join(",", part);
 
                         using (var command = new SqlCommand(insertStatememnt, connection))
@@ -82,16 +84,16 @@ namespace chess.api.common
             }
         }
 
-        private IList<string> GenerateInserts(Position position, Guid UserId)
+        private IList<string> GenerateInserts(Guid studyId, Position position, Guid UserId)
         {
             var inserts = new List<string>
             {
-                $"{position.Id.SqlOrNull()}, {UserId.SqlOrNull()}, 0, {DateTime.Now.SqlOrNull()}"
+                $"('{position.Id}', '{UserId}', '{studyId}', 0, '{DateTime.Now}')"
             };
 
             foreach (var p in position.Positions)
             {
-                inserts.AddRange(GenerateInserts(p, UserId));
+                inserts.AddRange(GenerateInserts(studyId, p, UserId));
             }
 
             return inserts;

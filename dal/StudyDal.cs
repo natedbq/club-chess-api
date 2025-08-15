@@ -114,14 +114,24 @@ namespace ChessApi.dal
             Study study = null;
             using (var connection = new SqlConnection(_sqlConnectionString))
             {
-                var query = "Select id,title,summaryFEN,description,positionId,perspective,tags,focus_tags,accuracy from Study as a inner join UserStudyStats as b on a.id = b.studyId"
-                    +$" where id = '{studyId}'";
+                var query = "Select id,title,summaryFEN,description,positionId,perspective,tags,focus_tags@+select from study@+innerJoin"
+                    +$" where id = '{studyId}'@+where";
                 query = query.Replace("@studyId", studyId.SqlOrNull())
                     .Replace("@userId", userId.SqlOrNull());
 
                 if(userId != default(Guid))
                 {
-                    query += $" where b.userId = '{userId}';";
+                    query = query
+                        .Replace("@+select", ",lastStudied,accuracy")
+                        .Replace("@+innerJoin", " as a inner join UserStudyStats as b on a.id = b.studyId")
+                        .Replace("@+where", $" and userId = '{userId}';");
+                }
+                else
+                {
+                    query = query
+                        .Replace("@+select", "")
+                        .Replace("@+innerJoin", "")
+                        .Replace("@+where", "");
                 }
 
                 connection.Open();
@@ -141,7 +151,11 @@ namespace ChessApi.dal
                             study.Perspective = (Color)reader.GetInt32(5);
                             study.Tags = reader.IsDBNull(6) ? new List<string>() : reader.GetString(6).Split(",");
                             study.FocusTags = reader.IsDBNull(7) ? new List<string>() : reader.GetString(7).Trim().Split(",");
-                            study.Score = reader.IsDBNull(8) ? null : reader.GetDouble(8);
+                            if(userId != default(Guid))
+                            {
+                                
+                                study.Score = reader.GetDouble(9);
+                            }
                         }
                         reader.Close();
                     }
