@@ -13,12 +13,12 @@ namespace chess.api.dal
             _sqlConnectionString = "Server=localhost\\SQLEXPRESS;Database=chess;Trusted_Connection=True;TrustServerCertificate=True";
         }
 
-        public async Task Save(Position position)
+        public async Task Save(Position position, Guid userId)
         {
             using (var connection = new SqlConnection(_sqlConnectionString))
             {
                 await connection.OpenAsync();
-                var query = GenerateSaveInstructions(position,  connection);
+                var query = GenerateSaveInstructions(position, userId, connection);
                 using (var command = new SqlCommand(query, connection))
                 {
                     try
@@ -48,12 +48,12 @@ namespace chess.api.dal
             }
         }
 
-        public Position GetById(Guid id, int depth = 0)
+        public Position GetById(Guid id, Guid userId = default(Guid), int depth = 0)
         {
             using(var connection = new SqlConnection(_sqlConnectionString))
             {
                 connection.Open();
-                var position = PrivateGetById(id, connection, depth);
+                var position = PrivateGetById(connection, id, userId, depth);
                 connection.Close();
                 return position;
             }
@@ -61,22 +61,34 @@ namespace chess.api.dal
 
 
 
-        public IList<Position> GetByParentId(Guid id, int depth = 0)
+        public IList<Position> GetByParentId(Guid id, Guid userId = default(Guid), int depth = 0)
         {
             using (var connection = new SqlConnection(_sqlConnectionString))
             {
                 connection.Open();
-                var position = PrivateGetById(id, connection, depth+1);
+                var position = PrivateGetById(connection, id, userId, depth+1);
                 connection.Close();
                 return position.Positions;
             }
         }
 
-        private Position PrivateGetById(Guid id, SqlConnection sqlConnection, int depth = 0)
+        private Position PrivateGetById(SqlConnection sqlConnection, Guid id, Guid userId = default(Guid), int depth = 0)
         {
             var position = new Position();
-            var query = "select id,title,description,moveName,moveFEN,parentId,move_from,move_to,plans,tags,isKeyPosition,lastStudied,mistakes,isActive from Position where id = @id";
-            query = query.Replace("@id", id.SqlOrNull());
+            var query = "select id,title,description,moveName,moveFEN,parentId,move_from,move_to,plans,tags,isKeyPosition,isActive@+select " +
+                $" from Position @+innerJoin where id = '{id}' @+where;";
+            if(userId != default(Guid))
+            {
+                query = query.Replace("@+select", ",b.lastStudied,b.mistakes")
+                     .Replace("@+innerJoin", "as a inner join UserPositionStats as b on a.id = b.PositionId")
+                     .Replace("@+where", $" and b.userId = '{userId}'");
+            }
+            else
+            {
+                query = query.Replace("@+select", "")
+                     .Replace("@+innerJoin","")
+                     .Replace("@+where", "");
+            }
 
             using(var command = new SqlCommand(query, sqlConnection))
             {
@@ -97,9 +109,17 @@ namespace chess.api.dal
                         position.Plans = reader.IsDBNull(8) ? "" : reader.GetString(8).Trim();
                         position.Tags = reader.IsDBNull(9) ? new List<string>() : reader.GetString(9).Trim().Split(",").ToList();
                         position.IsKeyPosition = reader.IsDBNull(10) ? false : reader.GetInt32(10) == 1;
-                        position.LastStudied = reader.IsDBNull(11) ? DateTime.Now : reader.GetDateTime(11);
-                        position.Mistakes = reader.IsDBNull(12) ? 0 : reader.GetInt64(12);
-                        position.IsActive = reader.IsDBNull(13) ? true : reader.GetInt32(13) == 1;
+                        position.IsActive = reader.IsDBNull(11) ? true : reader.GetInt32(11) == 1;
+                        if(userId != default(Guid))
+                        {
+                            position.LastStudied = reader.IsDBNull(12) ? DateTime.Now : reader.GetDateTime(12);
+                            position.Mistakes = reader.IsDBNull(13) ? 0 : reader.GetInt64(13);
+                        }
+                        else
+                        {
+                            position.LastStudied = DateTime.Now;
+                            position.Mistakes = 0;
+                        }
                     }
                     else
                     {
@@ -125,7 +145,7 @@ namespace chess.api.dal
                         }
                         reader.Close();
 
-                        position.Positions = childGuids.Select(g => PrivateGetById(g, sqlConnection, depth - 1)).ToList();
+                        position.Positions = childGuids.Select(g => PrivateGetById(sqlConnection, g, userId, depth - 1)).ToList();
                     }
                 }
             }
@@ -133,7 +153,7 @@ namespace chess.api.dal
             return position;
         }
 
-        private string GenerateSaveInstructions(Position position, SqlConnection connection)
+        private string GenerateSaveInstructions(Position position, Guid userId, SqlConnection connection)
         {
             var checkExistsQuery = "select * from Position where id = @id".Replace("@id", position.Id.SqlOrNull());
             var exists = false;
@@ -148,20 +168,21 @@ namespace chess.api.dal
 
             }
 
-            var query =  exists ? Update(position) : New(position);
+            var query =  exists ? Update(position) : New(position, userId);
 
             foreach (var child in position.Positions)
             {
-                query += GenerateSaveInstructions(child, connection);
+                query += GenerateSaveInstructions(child, userId, connection);
             }
 
             return query;
         }
 
-        private string New(Position position)
+        private string New(Position position, Guid userId)
         {
             var query = ("insert into Position (id,title,description,moveName,moveFEN,parentId,move_from,move_to,plans,tags,isKeyPosition,lastStudied,mistakes,isActive) "
-                + "values ('@id',@title,@description,@moveName,@moveFEN,@parentId,@from,@to,@plans,@tags,@isKeyPosition,@lastStudied,@mistakes,@isActive);\n");
+                + "values ('@id',@title,@description,@moveName,@moveFEN,@parentId,@from,@to,@plans,@tags,@isKeyPosition,@lastStudied,@mistakes,@isActive);\n" +
+                $"insert into userPositionStats (positionId, userId, mistakes, lastStudied) values ('{position.Id}','{userId}',0,'{DateTime.Now}');");
             query = query.Replace("@id", position.Id.ToString())
                 .Replace("@title", position.Title.SqlOrNull())
                 .Replace("@description", position.Description.SqlOrNull())
@@ -183,7 +204,7 @@ namespace chess.api.dal
         private string Update(Position position)
         {
             var query = ("update position set title=@title,description=@description,move_from=@from,move_to=@to,plans=@plans,tags=@tags,isKeyPosition=@isKeyPosition,"
-                + "lastStudied=@lastStudied,mistakes=@mistakes,isActive=@isActive where id = @id;\n")
+                + "isActive=@isActive where id = @id;\n")
                 .Replace("@title", position.Title.SqlOrNull())
                 .Replace("@description", position.Description.SqlOrNull())
                 .Replace("@id", position.Id.SqlOrNull())
@@ -199,10 +220,58 @@ namespace chess.api.dal
             return query;
         }
 
+        public void Mistake(Guid positionId, Guid userId)
+        {
+            using (var connection = new SqlConnection(_sqlConnectionString))
+            {
+                var query = $"update UserPositionStats set mistakes = mistakes + 1 where positionId = '{positionId}' and userId = '{userId}';";
+
+                connection.Open();
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.ExecuteNonQuery();
+                }
+                connection.Close();
+            }
+        }
+
+        public void Correct(Guid positionId, Guid userId)
+        {
+            using (var connection = new SqlConnection(_sqlConnectionString))
+            {
+                var query = $"update UserPositionStats set mistakes = GREATEST(0,mistakes-1) where positionId = '{positionId}' and userId = '{userId}';";
+
+                connection.Open();
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.ExecuteNonQuery();
+                }
+                connection.Close();
+            }
+        }
+
+        public void StudyPosition(Guid positionId, Guid userId)
+        {
+            using (var connection = new SqlConnection(_sqlConnectionString))
+            {
+                var query = $"update UserPositionStats set lastStudied = '{DateTime.Now}' where positionId = '{positionId}' and userId = '{userId}';";
+
+                connection.Open();
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.ExecuteNonQuery();
+                }
+                connection.Close();
+            }
+        }
+
 
         private async Task<string> GenerateCascadeDelete(Guid id)
         {
-            var query = "delete from Position where id = @id;\n";
+            var query = "delete from Position where id = @id;delete from UserPositionStats where positionId = @id\n";
             query = query.Replace("@id", id.SqlOrNull());
 
             using (var connection = new SqlConnection(_sqlConnectionString))
@@ -218,7 +287,9 @@ namespace chess.api.dal
                     {
                             while (reader.Read())
                             {
-                                query += await GenerateCascadeDelete(reader.GetGuid(0));
+                                var childId = reader.GetGuid(0);
+                                if (childId != id)
+                                    query += await GenerateCascadeDelete(childId);
                             }
                     }
                 }

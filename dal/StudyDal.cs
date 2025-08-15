@@ -13,7 +13,7 @@ namespace ChessApi.dal
     public class StudyDal
     {
         private readonly string _sqlConnectionString;
-
+        private readonly PortStudyToUser _portToStudy = new PortStudyToUser();
 
         public StudyDal()
         {
@@ -21,16 +21,11 @@ namespace ChessApi.dal
             _sqlConnectionString = "Server=localhost\\SQLEXPRESS;Database=chess;Trusted_Connection=True;TrustServerCertificate=True";
         }
 
-        public IList<Study> GetStudies(Guid userId = default(Guid))
+        public IList<Study> GetStudiesByUserId(Guid userId)
         {
             var studies = new List<Study>();
-            var query = "Select id,title,summaryFEN,description,positionId,perspective,tags,focus_tags,score from Study";
-
-            if(userId != default(Guid))
-            {
-                query += $" where id in (select studyId from StudyUser where UserId = {userId.SqlOrNull()});";
-            }
-
+            var query = "Select id,title,summaryFEN,description,positionId,perspective,tags,focus_tags,accuracy from Study as a inner join UserStudyStats as b on a.id = b.studyId"
+                + $" where id in (select studyId from StudyUser where UserId = {userId.SqlOrNull()}) and b.userId = '{userId}';";
 
             using(var connection = new SqlConnection(_sqlConnectionString))
             {
@@ -50,9 +45,11 @@ namespace ChessApi.dal
                             study.Perspective = (Color)reader.GetInt32(5);
                             study.Tags = reader.IsDBNull(6) ? new List<string>() : reader.GetString(6).Trim().Split(",");
                             study.FocusTags = reader.IsDBNull(7) ? new List<string>() : reader.GetString(7).Trim().Split(",");
-                            study.Score = reader.IsDBNull(8) ? 0 : reader.GetDouble(8);
+                            study.Score = reader.IsDBNull(8) ? null : reader.GetDouble(8);
                             studies.Add(study);
                         }
+
+                        reader.Close();
                     }
                 }
                 connection.Close();
@@ -61,13 +58,71 @@ namespace ChessApi.dal
             return studies;
         }
 
-        public Study GetById(Guid id)
+        public IList<Study> GetStudiesByClubId(Guid clubId)
+        {
+            var studies = new List<Study>();
+            var query = "Select id,title,summaryFEN,description,positionId,perspective,tags,focus_tags from Study";
+                //+ "as a inner join UserStudyStats as b on a.id = b.studyId "
+                //+ $" where id in (select studyId from StudyClub where clubId = {clubId.SqlOrNull()}) and b.userId = '{userId}'";
+
+            using (var connection = new SqlConnection(_sqlConnectionString))
+            {
+                connection.Open();
+                using (var command = new SqlCommand(query, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var study = new Study();
+                            study.Id = reader.GetGuid(0);
+                            study.Title = reader.GetString(1).Trim();
+                            study.SummaryFEN = reader.GetString(2).Trim();
+                            study.Description = reader.IsDBNull(3) ? null : reader.GetString(3).Trim();
+                            study.PositionId = reader.GetGuid(4);
+                            study.Perspective = (Color)reader.GetInt32(5);
+                            study.Tags = reader.IsDBNull(6) ? new List<string>() : reader.GetString(6).Trim().Split(",");
+                            study.FocusTags = reader.IsDBNull(7) ? new List<string>() : reader.GetString(7).Trim().Split(",");
+                            study.Score = reader.IsDBNull(8) ? 0 : reader.GetDouble(8);
+                            studies.Add(study);
+                        }
+
+                        reader.Close();
+                    }
+                }
+                connection.Close();
+            }
+
+            return studies;
+        }
+
+        public void Study(Guid studyId, Guid userId)
+        {
+            using (var connection = new SqlConnection(_sqlConnectionString))
+            {
+                connection.Open();
+                var query = $"update UserStudyStats set lastStudied=getdate() where studyId = {studyId.SqlOrNull()} and userId = {userId.SqlOrNull()}";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public Study GetById(Guid studyId, Guid userId = default(Guid))
         {
             Study study = null;
             using (var connection = new SqlConnection(_sqlConnectionString))
             {
-                var query = "Select id,title,summaryFEN,description,positionId,perspective,tags,focus_tags,score from Study where id = @id";
-                query = query.Replace("@id", id.SqlOrNull());
+                var query = "Select id,title,summaryFEN,description,positionId,perspective,tags,focus_tags,accuracy from Study as a inner join UserStudyStats as b on a.id = b.studyId"
+                    +$" where id = '{studyId}'";
+                query = query.Replace("@studyId", studyId.SqlOrNull())
+                    .Replace("@userId", userId.SqlOrNull());
+
+                if(userId != default(Guid))
+                {
+                    query += $" where b.userId = '{userId}';";
+                }
 
                 connection.Open();
 
@@ -86,21 +141,22 @@ namespace ChessApi.dal
                             study.Perspective = (Color)reader.GetInt32(5);
                             study.Tags = reader.IsDBNull(6) ? new List<string>() : reader.GetString(6).Split(",");
                             study.FocusTags = reader.IsDBNull(7) ? new List<string>() : reader.GetString(7).Trim().Split(",");
-                            study.Score = reader.IsDBNull(8) ? 0 : reader.GetDouble(8);
+                            study.Score = reader.IsDBNull(8) ? null : reader.GetDouble(8);
                         }
+                        reader.Close();
                     }
                 }
 
                 connection.Close();
             }
-
-            StudyAccuracyCache.Invalidate(id);
             return study;
         }
 
-        public void Delete(Guid id)
+        public void Delete(Guid studyId)
         {
-            var query = $"delete from Study where id = '{id.ToString()}'";
+            var query = $"delete from study where id = '{studyId}';" +
+                $"delete from StudyUser where studyId = '{studyId}';"+
+                $"delete from userStudyStats where studyId = '{studyId}';";
 
             using (var connection = new SqlConnection(_sqlConnectionString))
             {
@@ -144,22 +200,25 @@ namespace ChessApi.dal
 
         private void New(Study study, SqlConnection connection)
         {
-            var query = $"insert into Study (id, title, summaryFen, description, positionId, perspective,tags,focus_tags,score) " +
+            var query = $"insert into Study (id, title, summaryFen, description, positionId, perspective,tags,focus_tags,score,owner) " +
                 $"values ('{study.Id}',{study.Title.SqlOrNull()},'{study.SummaryFEN}','{study.Description}','{study.PositionId.Value}',{(int)study.Perspective}," 
-                + $" {string.Join(",", study.Tags).SqlOrNull()}, {string.Join(",", study.FocusTags).SqlOrNull()},{study.Score})";
+                + $" {string.Join(",", study.Tags).SqlOrNull()}, {string.Join(",", study.FocusTags).SqlOrNull()},{study.Score},{study.Owner.Id.SqlOrNull()});"
+                + $"insert into StudyUser (studyId, userId) values ('{study.Id}','{study.Owner.Id}');"
+                + $"insert into UserStudyStats (studyId,userId,lastStudied,accuracy) values ('{study.Id}','{study.Owner.Id}','{DateTime.Now}',100);";
             using (var command = new SqlCommand(query, connection))
             {
-                command.ExecuteNonQuery();
+                var i = command.ExecuteNonQuery();
+                var e = i;
             }
 
         }
 
-        public void UpdateScore(Guid id, double score)
+        public void UpdateScore(Guid studyId, Guid userId, double score)
         {
             using (var connection = new SqlConnection(_sqlConnectionString))
             {
                 connection.Open();
-                var query = $"update study set score={score} where id = {id.SqlOrNull()}";
+                var query = $"update UserStudyStats set accuracy={score} where studyId = {studyId.SqlOrNull()} and userId = {userId.SqlOrNull()}";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.ExecuteNonQuery();

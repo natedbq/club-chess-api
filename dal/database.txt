@@ -2,7 +2,8 @@ create table Club (
 	Id uniqueIdentifier,
 	Name Varchar(60),
 	Description Varchar(max),
-	Owner uniqueIdentifier
+	Owner uniqueIdentifier,
+	picUrl varchar(250)
 );
 
 create table StudyClub (
@@ -13,7 +14,10 @@ create table StudyClub (
 create table [User] (
 	Id uniqueIdentifier,
 	Username varchar(25),
-	Password varchar(50)
+	FirstName varchar(25),
+	LastName varchar(25),
+	Password varchar(60),
+	picUrl varchar(250)
 );
 
 create table ClubUser (
@@ -24,4 +28,25 @@ create table ClubUser (
 create table StudyUser (
 	StudyId uniqueIdentifier,
 	UserId uniqueIdentifier
+);
+
+create table ClubInvite (
+	ToUser uniqueIdentifier,
+	FromUser uniqueIdentifier,
+	ClubId uniqueIdentifier,
+	Message varchar(max)
+);
+
+create table UserStudyStats (
+	StudyId uniqueIdentifier,
+	UserId uniqueIdentifier,
+	LastStudied datetime,
+	Accuracy float
+);
+
+create table UserPositionStats (
+	PositionId uniqueIdentifier,
+	UserId uniqueIdentifier,
+	Mistakes bigint,
+	LastStudied datetime
 );

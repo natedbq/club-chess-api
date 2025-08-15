@@ -14,9 +14,9 @@ namespace ChessApi.repository
 
 
 
-        public IList<SimpleStudy> GetStudies(Guid userId = default(Guid))
+        public IList<SimpleStudy> GetStudies(Guid userId)
         {
-            var studies = dal.GetStudies(userId);
+            var studies = dal.GetStudiesByUserId(userId);
             var mapper = new Mapper(new MapperConfiguration(cfg =>
             {
                 cfg.AddProfile<AutoMapperProfile>();
@@ -29,14 +29,36 @@ namespace ChessApi.repository
 
             var simps = mapper.Map<IList<SimpleStudy>>(studies);
 
-            foreach(var simp in simps)
+            if(userId != default(Guid))
             {
-                if(simp.Score == -1)
+                foreach (var simp in simps)
                 {
-                    simp.Score = StudyAccuracyCache.GetAccuracy(simp.Id);
-                    dal.UpdateScore(simp.Id, simp.Score);
+                    if (simp.Score == -1)
+                    {
+                        simp.Score = StudyAccuracyCache.GetAccuracy(simp.Id);
+                        dal.UpdateScore(simp.Id, userId, simp.Score.Value);
+                    }
                 }
             }
+
+            return simps;
+        }
+
+
+        public IList<SimpleStudy> GetStudiesByClubId(Guid clubId)
+        {
+            var studies = dal.GetStudiesByClubId(clubId);
+            var mapper = new Mapper(new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile<AutoMapperProfile>();
+            }));
+
+            foreach (var study in studies)
+            {
+                study.Position = positionDal.GetById(study.PositionId.Value);
+            }
+
+            var simps = mapper.Map<IList<SimpleStudy>>(studies);
 
             return simps;
         }

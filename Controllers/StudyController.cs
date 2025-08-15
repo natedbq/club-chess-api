@@ -29,13 +29,11 @@ namespace HealthTrackerApi.Controllers
             return HttpStatusCode.NoContent;
         }
 
-        [HttpPut("{id}/study")]
-        public HttpStatusCode Study(Guid id)
+        [HttpPut("{id}/study/{userId}")]
+        public HttpStatusCode Study(Guid id, Guid userId)
         {
-            var study = studyRepo.GetStudyById(id);
-            study.Position.LastStudied = DateTime.Now;
-            studyRepo.Save(study);
-            
+            studyRepo.Study(id, userId);
+
             return HttpStatusCode.NoContent;
         }
 
@@ -53,7 +51,7 @@ namespace HealthTrackerApi.Controllers
             {
                 return simpleStudyRepo.GetStudies(userId);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new List<SimpleStudy>()
                 {
@@ -67,10 +65,10 @@ namespace HealthTrackerApi.Controllers
         }
 
 
-        [HttpGet("Studies/{id}")]
-        public Study GetStudies(Guid id)
+        [HttpGet("{studyId}")]
+        public Study GetStudies(Guid studyId, [FromQuery]  Guid userId = default(Guid))
         {
-            return studyRepo.GetStudyById(id);
+            return studyRepo.GetStudyById(studyId,userId);
         }
     }
 }

@@ -18,14 +18,14 @@ namespace chess.api.services
 
         public void Execute()
         {
-            var studies = simpleStudyRepo.GetStudies();
-            foreach(var simpleStudy in studies)
-            {
-                var study = studyRepo.GetStudyById(simpleStudy.Id);
-                var topPosition = positionRepo.GetById(study.Position.Id, 200);
+            //var studies = simpleStudyRepo.GetStudies();
+            //foreach(var simpleStudy in studies)
+            //{
+            //    var study = studyRepo.GetStudyById(simpleStudy.Id);
+            //    var topPosition = positionRepo.GetById(study.Position.Id, depth:200);
 
-                InferUCI(topPosition);
-            }
+            //    InferUCI(topPosition);
+            //}
         }
 
         private void InferUCI(Position p1)
@@ -97,7 +97,7 @@ namespace chess.api.services
                     p2.Move.From = uci.from;
                     p2.Move.To = uci.to;
                     p2.Tags.Add("uci_mig_3");
-                    positionRepo.Save(p2);
+                    //positionRepo.Save(p2);
                 }
                 InferUCI(p2);
             }

@@ -53,4 +53,3 @@ app.UseCors("AllowAngularApp");
 app.Run();
 
 var simpleStudyRepo = new SimpleStudyRepository();
-simpleStudyRepo.GetStudies();

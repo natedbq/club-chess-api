@@ -6,15 +6,15 @@ namespace chess.api.repository
 {
     public class StudyRepository
     {
-        private StudyDal dal = new StudyDal();
-        private PositionDal positionDal = new PositionDal();
+        private static StudyDal dal = new StudyDal();
+        private static PositionDal positionDal = new PositionDal();
 
         public async Task Save(Study study)
         {
             await dal.Save(study);
             if(study.Position != null)
             {
-                await positionDal.Save(study.Position);
+                await positionDal.Save(study.Position,study.Owner.Id);
             }
         }
 
@@ -26,15 +26,15 @@ namespace chess.api.repository
             positionDal.Delete(study.PositionId.Value);
         }
 
-        public IList<Study> GetStub()
-        {
-            return dal.GetStudies();
+        public Study GetStudyById(Guid id, Guid userId = default(Guid)) {
+            var study = dal.GetById(id, userId);
+            study.Position = positionDal.GetById(study.PositionId.Value,userId,0);
+            return study;
         }
 
-        public Study GetStudyById(Guid id) {
-            var study = dal.GetById(id);
-            study.Position = positionDal.GetById(study.PositionId.Value,0);
-            return study;
+        public void Study(Guid studyId, Guid userId)
+        {
+            dal.Study(studyId, userId);
         }
     }
 }

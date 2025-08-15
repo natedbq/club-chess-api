@@ -12,10 +12,10 @@ namespace chess.api.common
         private static readonly StudyDal _studyDal = new StudyDal();
         private static readonly PositionDal _positionDal = new PositionDal();
 
-        public static void Invalidate(Guid studyId)
+        public static void Invalidate(Guid studyId, Guid userId)
         {
             Cache.Remove(studyId);
-            _studyDal.UpdateScore(studyId, -1);
+            _studyDal.UpdateScore(studyId, userId, -1);
         }
 
         public static double GetAccuracy(Guid studyId)
@@ -26,7 +26,7 @@ namespace chess.api.common
             }
 
             var study = _studyDal.GetById(studyId);
-            study.Position = _positionDal.GetById(study.PositionId.Value, 2000);
+            study.Position = _positionDal.GetById(study.PositionId.Value, depth: 2000);
 
 
             var score = Calculate(study.Position);

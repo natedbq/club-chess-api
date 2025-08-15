@@ -12,19 +12,34 @@ namespace chess.api.repository
             positionDal.Delete(id);
         }
 
-        public void Save(Position position)
+        public async Task Save(Position position, Guid userId)
         {
-            positionDal.Save(position);
+            await positionDal.Save(position, userId);
         }
 
-        public Position GetById(Guid id, int depth = 0)
+        public Position GetById(Guid id, Guid userId, int depth = 0)
         {
-            return positionDal.GetById(id, depth);
+            return positionDal.GetById(id, userId, depth);
         }
 
-        public IList<Position> GetByParentId(Guid id, int depth = 0)
+        public IList<Position> GetByParentId(Guid id, Guid userId, int depth = 0)
         {
-            return positionDal.GetByParentId(id, depth);
+            return positionDal.GetByParentId(id,userId, depth);
+        }
+
+        public void StudyPosition(Guid positionId, Guid userId)
+        {
+            positionDal.StudyPosition(positionId, userId);
+        }
+
+        public void Mistake(Guid positionId, Guid userId)
+        {
+            positionDal.Mistake(positionId, userId);
+        }
+
+        public void Correct(Guid positionId, Guid userId)
+        {
+            positionDal.Correct(positionId, userId);
         }
     }
 }

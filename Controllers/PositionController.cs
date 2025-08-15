@@ -21,31 +21,25 @@ namespace chess.api.Controllers
             positionRepo = new PositionRepository();
         }
 
-        [HttpPut("{id}/study")]
-        public HttpStatusCode StudyPosition(Guid id)
+        [HttpPut("{positionId}/study/{userId}")]
+        public async Task<HttpStatusCode> StudyPosition(Guid positionId, Guid userId)
         {
-            var position = positionRepo.GetById(id);
-            position.LastStudied = DateTime.Now;
-            positionRepo.Save(position);
+            positionRepo.StudyPosition(positionId, userId);
 
             return HttpStatusCode.NoContent;
         }
 
-        [HttpPut("{id}/mistake")]
-        public HttpStatusCode MistakePosition(Guid id)
+        [HttpPut("{positionId}/mistake/{userId}")]
+        public HttpStatusCode MistakePosition(Guid positionId, Guid userId)
         {
-            var position = positionRepo.GetById(id);
-            position.Mistakes += 1;
-            positionRepo.Save(position);
+            positionRepo.Mistake(positionId, userId);
 
             return HttpStatusCode.NoContent;
         }
-        [HttpPut("{id}/correct")]
-        public HttpStatusCode CorrectPosition(Guid id)
+        [HttpPut("{positionId}/correct/{userId}")]
+        public HttpStatusCode CorrectPosition(Guid positionId, Guid userId)
         {
-            var position = positionRepo.GetById(id);
-            position.Mistakes = Math.Max(position.Mistakes - 1, 0);
-            positionRepo.Save(position);
+            positionRepo.Correct(positionId, userId);
 
             return HttpStatusCode.NoContent;
         }
@@ -58,31 +52,31 @@ namespace chess.api.Controllers
         }
 
         [HttpPost]
-        public HttpStatusCode SavePosition([FromBody] Position position)
+        public HttpStatusCode SavePosition([FromBody] Position position, Guid userId)
         {
-            positionRepo.Save(position);
+            positionRepo.Save(position, userId);
             return HttpStatusCode.NoContent;
         }
 
 
         [HttpGet("{id}")]
-        public Position GetPosition(Guid id, [FromQuery] int depth = 0)
+        public Position GetPosition(Guid id, [FromQuery] Guid userId, [FromQuery] int depth = 0)
         {
             if(depth > 10)
             {
                 throw new ArgumentException("[depth] must be <= 10");
             }
-            return positionRepo.GetById(id, depth);
+            return positionRepo.GetById(id, userId, depth);
         }
 
         [HttpGet("parentId/{id}")]
-        public IList<Position> GetPositionByParentId(Guid id, [FromQuery] int depth = 0)
+        public IList<Position> GetPositionByParentId(Guid id, [FromQuery] Guid userId, [FromQuery] int depth = 0)
         {
             if (depth > 10)
             {
                 throw new ArgumentException("[depth] must be <= 10");
             }
-            return positionRepo.GetByParentId(id, depth);
+            return positionRepo.GetByParentId(id, userId, depth);
         }
     }
 }
