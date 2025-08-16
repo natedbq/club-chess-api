@@ -4,6 +4,8 @@ using chess.api.dal;
 using chess.api.models;
 using ChessApi.configuration;
 using ChessApi.dal;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration.UserSecrets;
 
 namespace ChessApi.repository
 {
@@ -45,9 +47,9 @@ namespace ChessApi.repository
         }
 
 
-        public IList<SimpleStudy> GetStudiesByClubId(Guid clubId)
+        public IList<SimpleStudy> GetStudiesByClubId(Guid clubId, [FromQuery] Guid userId = default(Guid))
         {
-            var studies = dal.GetStudiesByClubId(clubId);
+            var studies = dal.GetStudiesByClubId(clubId, userId);
             var mapper = new Mapper(new MapperConfiguration(cfg =>
             {
                 cfg.AddProfile<AutoMapperProfile>();

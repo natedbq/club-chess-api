@@ -20,15 +20,13 @@ namespace chess.api.dal
             _sqlConnectionString = "Server=localhost\\SQLEXPRESS;Database=chess;Trusted_Connection=True;TrustServerCertificate=True";
         }
 
-        public async Task AddMember(Guid clubId, Guid userId)
+        public async Task AddStudy(Guid clubId, Guid studyId)
         {
             using (var connection = new SqlConnection(_sqlConnectionString))
             {
                 await connection.OpenAsync();
 
-                var query = $"insert into ClubUser (clubId, userId) values (@clubId, @userId)"
-                    .Replace("@clubId", clubId.SqlOrNull())
-                    .Replace("@userId", userId.SqlOrNull());
+                var query = $"insert into StudyClub (clubId, studyId) values ('{clubId}','{studyId}');";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.ExecuteNonQuery();
@@ -36,15 +34,47 @@ namespace chess.api.dal
             }
         }
 
-        public async Task RemoveMember(Guid clubId, Guid userId)
+        public async Task RemoveStudy(Guid clubId, Guid studyId)
         {
             using (var connection = new SqlConnection(_sqlConnectionString))
             {
                 await connection.OpenAsync();
 
-                var query = $"delete from ClubUser where clubId = @clubId and userId = @userId"
+                var query = "delete from StudyClub where clubId = @clubId and studyId = @studyId;"
                     .Replace("@clubId", clubId.SqlOrNull())
-                    .Replace("@userId", userId.SqlOrNull());
+                    .Replace("@studyId", studyId.SqlOrNull());
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public async Task AddMember(Guid clubId, string username)
+        {
+            using (var connection = new SqlConnection(_sqlConnectionString))
+            {
+                await connection.OpenAsync();
+
+                var query = $"insert into ClubUser (clubId, userId) values (@clubId, (select id from [user] where username = @username))"
+                    .Replace("@clubId", clubId.SqlOrNull())
+                    .Replace("@username", username.SqlOrNull());
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public async Task RemoveMember(Guid clubId, string username)
+        {
+            using (var connection = new SqlConnection(_sqlConnectionString))
+            {
+                await connection.OpenAsync();
+
+                var query = $"delete from ClubUser where clubId = @clubId and userId = (select id from [user] where username = @username)"
+                    .Replace("@clubId", clubId.SqlOrNull())
+                    .Replace("@username", username.SqlOrNull());
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.ExecuteNonQuery();
@@ -70,9 +100,32 @@ namespace chess.api.dal
                 }
             }
 
-            await AddMember(id, club.OwnerId);
+            await AddMember(id, club.username);
 
             return id;
+        }
+
+        public async Task<bool> HasMember(Guid clubId, Guid userId)
+        {
+            var isMember = false;
+            using (var connection = new SqlConnection(_sqlConnectionString))
+            {
+                await connection.OpenAsync();
+
+
+                var query = $"select * from ClubUser where clubId = '{clubId}' and userId = '{userId}';";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        isMember = reader.Read();
+
+                        reader.Close();
+                    }
+                }
+            }
+
+            return isMember;
         }
 
         public async Task<IList<Club>> GetClubsByUserId(Guid userId)
@@ -146,7 +199,7 @@ namespace chess.api.dal
             return clubs;
         }
 
-        public async Task<Club> GetClubById(Guid clubId)
+        public async Task<Club> GetClubById(Guid clubId, Guid userId = default(Guid))
         {
             Club club = null;
             using (var connection = new SqlConnection(_sqlConnectionString))
@@ -165,7 +218,7 @@ namespace chess.api.dal
                             club.Name = reader.GetString(1);
                             club.Description = reader.IsDBNull(2) ? "" : reader.GetString(2);
                             club.Owner = await _userDal.GetSimpleUserById(reader.GetGuid(3));
-                            club.Studies = _studyRepository.GetStudiesByClubId(club.Id);
+                            club.Studies = _studyRepository.GetStudiesByClubId(club.Id, userId);
                             club.Members = await _userDal.GetSimpleUsersByClubId(club.Id);
                             club.PicUrl = reader.IsDBNull(4) ? null : reader.GetString(4);
                         }

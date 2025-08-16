@@ -58,10 +58,26 @@ namespace ChessApi.dal
             return studies;
         }
 
-        public IList<Study> GetStudiesByClubId(Guid clubId)
+        public IList<Study> GetStudiesByClubId(Guid clubId, Guid userId = default(Guid))
         {
             var studies = new List<Study>();
-            var query = "Select id,title,summaryFEN,description,positionId,perspective,tags,focus_tags from Study";
+            var query = "Select id,title,summaryFEN,description,positionId,perspective,tags,focus_tags@+select from Study s@+leftJoin"
+                + $" where s.id in (select studyId from StudyClub where clubId = '{clubId}')@+where";
+
+            if(userId != default(Guid))
+            {
+                query = query
+                    .Replace("@+select",",score")
+                    .Replace("@+leftJoin", $" left join UserStudyStats ss on s.id = ss.studyId and ss.userId = '{userId}'")
+                    .Replace("@+where", $" and s.id in (select studyId from StudyClub where clubId = '{clubId}')");
+            }
+            else
+            {
+                query = query
+                    .Replace("@+select", "")
+                    .Replace("@+leftJoin", "")
+                    .Replace("@+where", "");
+            }
                 //+ "as a inner join UserStudyStats as b on a.id = b.studyId "
                 //+ $" where id in (select studyId from StudyClub where clubId = {clubId.SqlOrNull()}) and b.userId = '{userId}'";
 
@@ -83,7 +99,15 @@ namespace ChessApi.dal
                             study.Perspective = (Color)reader.GetInt32(5);
                             study.Tags = reader.IsDBNull(6) ? new List<string>() : reader.GetString(6).Trim().Split(",");
                             study.FocusTags = reader.IsDBNull(7) ? new List<string>() : reader.GetString(7).Trim().Split(",");
-                            study.Score = reader.IsDBNull(8) ? 0 : reader.GetDouble(8);
+
+                            if(userId == default(Guid))
+                            {
+                                study.Score = null;
+                            }
+                            else
+                            {
+                                study.Score = reader.IsDBNull(8) ? 0 : reader.GetDouble(8);
+                            }
                             studies.Add(study);
                         }
 

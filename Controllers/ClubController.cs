@@ -14,9 +14,9 @@ namespace chess.api.Controllers
 
 
         [HttpGet("{id}")]
-        public async Task<Club> Club(Guid id)
+        public async Task<Club> Club(Guid id, [FromQuery] Guid userId = default(Guid))
         {
-            var club = await _clubDal.GetClubById(id);
+            var club = await _clubDal.GetClubById(id,userId);
             return club;
         }
 
@@ -42,16 +42,35 @@ namespace chess.api.Controllers
             return clubId;
         }
 
-        [HttpPost("{clubId}/add/{userId}")]
-        public async Task AddMember(Guid clubId, Guid userId)
+        [HttpPost("{clubId}/addStudy/{studyId}")]
+        public async Task AddStudy(Guid clubId, Guid studyId)
         {
-            await _clubDal.AddMember(clubId, userId);
+            await _clubDal.AddStudy(clubId, studyId);
         }
 
-        [HttpPost("{clubId}/remove/{userId}")]
-        public async Task RemoveMember(Guid clubId, Guid userId)
+        [HttpPost("{clubId}/removeStudy/{studyId}")]
+        public async Task RemoveStudy(Guid clubId, Guid studyId)
         {
-            await _clubDal.AddMember(clubId, userId);
+            await _clubDal.RemoveStudy(clubId, studyId);
+        }
+
+        [HttpPost("{clubId}/add/{username}")]
+        public async Task AddMember(Guid clubId, string username)
+        {
+            await _clubDal.AddMember(clubId, username);
+        }
+
+        [HttpPost("{clubId}/remove/{username}")]
+        public async Task RemoveMember(Guid clubId, string username)
+        {
+            await _clubDal.AddMember(clubId, username);
+        }
+
+        [HttpGet("{clubId}/hasMember/{userId}")]
+        public async Task<bool> HasMember(Guid clubId, Guid userId)
+        {
+            var hasMember = await _clubDal.HasMember(clubId, userId);
+            return hasMember;
         }
     }
 
@@ -60,5 +79,6 @@ namespace chess.api.Controllers
         public string Name { get; set; }
         public string Description { get; set; }
         public Guid OwnerId { get; set; }
+        public string username { get; set; }
     }
 }
