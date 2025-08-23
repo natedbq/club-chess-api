@@ -42,7 +42,7 @@ namespace chess.api.common
             return exists;
         }
 
-        public void PortToUser(Guid studyId, Guid userId)
+        public async Task PortToUser(Guid studyId, Guid userId)
         {
             using (var connection = new SqlConnection(_sqlConnectionString))
             {
@@ -51,7 +51,7 @@ namespace chess.api.common
                 if (!exists)
                 {
                     connection.Open();
-                    var study = _studyDal.GetById(studyId);
+                    var study = await _studyDal.GetById(studyId);
 
                     var importStudyStatement = $"insert into UserStudyStats (studyId, userId, lastStudied, Accuracy) values ({studyId.SqlOrNull()},{userId.SqlOrNull()},{DateTime.Now.SqlOrNull()}, -1);";
                     importStudyStatement += $"insert into StudyUser (studyId, userId) values ({studyId.SqlOrNull()},{userId.SqlOrNull()});";

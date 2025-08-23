@@ -27,6 +27,13 @@ namespace chess.api.Controllers
             return user;
         }
 
+        [HttpGet("{id}/invites")]
+        public async Task<IList<ClubInvite>> GetInvites(Guid id)
+        {
+            var invites = await userDal.GetInvitesForUser(id);
+            return invites;
+        }
+
         [HttpPost]
         public async Task<Guid> User(NewUserModel user)
         {
@@ -35,10 +42,10 @@ namespace chess.api.Controllers
         }
 
         [HttpPost("auth")]
-        public async Task<Guid> Authenticate(UsernameAndPassword details)
+        public async Task<SimpleUser> Authenticate(UsernameAndPassword details)
         {
-            var id = await userDal.Authenticate(details.Username, details.Password);
-            return id;
+            var user = await userDal.Authenticate(details.Username, details.Password);
+            return user;
         }
     }
 

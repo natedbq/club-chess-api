@@ -54,11 +54,11 @@ namespace HealthTrackerApi.Controllers
         }
 
         [HttpGet("SimpleStudies/{userId}")]
-        public IList<SimpleStudy> GetSimpleStudies(Guid userId)
+        public async Task<IList<SimpleStudy>> GetSimpleStudies(Guid userId)
         {
             try
             {
-                return simpleStudyRepo.GetStudies(userId);
+                return await simpleStudyRepo.GetStudies(userId);
             }
             catch (Exception ex)
             {
@@ -75,9 +75,10 @@ namespace HealthTrackerApi.Controllers
 
 
         [HttpGet("{studyId}")]
-        public Study GetStudies(Guid studyId, [FromQuery]  Guid userId = default(Guid))
+        public async Task<Study> GetStudies(Guid studyId, [FromQuery]  Guid userId = default(Guid))
         {
-            return studyRepo.GetStudyById(studyId,userId);
+            StudyAccuracyCache.Invalidate(studyId, userId);
+            return await studyRepo.GetStudyById(studyId,userId);
         }
     }
 }

@@ -7,32 +7,31 @@ namespace chess.api.common
 {
     public class StudyAccuracyCache
     {
-        private static Dictionary<Guid, Double> Cache = new Dictionary<Guid, Double>();
 
         private static readonly StudyDal _studyDal = new StudyDal();
         private static readonly PositionDal _positionDal = new PositionDal();
 
         public static void Invalidate(Guid studyId, Guid userId)
         {
-            Cache.Remove(studyId);
             _studyDal.UpdateScore(studyId, userId, -1);
         }
 
-        public static double GetAccuracy(Guid studyId)
+        public static async Task<double> GetAccuracy(Guid studyId,Guid userId)
         {
-            if (Cache.ContainsKey(studyId))
+
+            var study = await _studyDal.GetById(studyId, userId);
+
+            if(study.Score == null)
             {
-                return Cache[studyId];
+                return 0;
             }
 
-            var study = _studyDal.GetById(studyId);
-            study.Position = _positionDal.GetById(study.PositionId.Value, depth: 2000);
+            study.Position = _positionDal.GetById(study.PositionId.Value, userId, depth: 2000);
 
 
             var score = Calculate(study.Position);
 
             var v = ((double)score.Total) / ((double)score.Total + score.Mistakes) * 100;
-            Cache.Add(studyId, v);
 
             return v;
         }

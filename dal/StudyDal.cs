@@ -14,6 +14,7 @@ namespace ChessApi.dal
     {
         private readonly string _sqlConnectionString;
         private readonly PortStudyToUser _portToStudy = new PortStudyToUser();
+        private static readonly UserDal _userDal = new UserDal();
 
         public StudyDal()
         {
@@ -67,7 +68,7 @@ namespace ChessApi.dal
             if(userId != default(Guid))
             {
                 query = query
-                    .Replace("@+select",",score")
+                    .Replace("@+select",",accuracy")
                     .Replace("@+leftJoin", $" left join UserStudyStats ss on s.id = ss.studyId and ss.userId = '{userId}'")
                     .Replace("@+where", $" and s.id in (select studyId from StudyClub where clubId = '{clubId}')");
             }
@@ -133,12 +134,12 @@ namespace ChessApi.dal
             }
         }
 
-        public Study GetById(Guid studyId, Guid userId = default(Guid))
+        public async Task<Study> GetById(Guid studyId, Guid userId = default(Guid))
         {
             Study study = null;
             using (var connection = new SqlConnection(_sqlConnectionString))
             {
-                var query = "Select id,title,summaryFEN,description,positionId,perspective,tags,focus_tags@+select from study@+innerJoin"
+                var query = "Select id,title,summaryFEN,description,positionId,perspective,tags,focus_tags,owner@+select from study@+innerJoin"
                     +$" where id = '{studyId}'@+where";
                 query = query.Replace("@studyId", studyId.SqlOrNull())
                     .Replace("@userId", userId.SqlOrNull());
@@ -175,10 +176,11 @@ namespace ChessApi.dal
                             study.Perspective = (Color)reader.GetInt32(5);
                             study.Tags = reader.IsDBNull(6) ? new List<string>() : reader.GetString(6).Split(",");
                             study.FocusTags = reader.IsDBNull(7) ? new List<string>() : reader.GetString(7).Trim().Split(",");
+                            study.Owner = await _userDal.GetSimpleUserById(reader.GetGuid(8));
                             if(userId != default(Guid))
                             {
                                 
-                                study.Score = reader.GetDouble(9);
+                                study.Score = reader.GetDouble(10);
                             }
                         }
                         reader.Close();
@@ -266,12 +268,11 @@ namespace ChessApi.dal
 
         private void Update(Study study, SqlConnection connection)
         {
-            var query = $"update study set description=@description,summaryFEN=@summaryFEN,tags=@tags,focus_tags=@focus_tags,score=@score where id = @id"
+            var query = $"update study set description=@description,summaryFEN=@summaryFEN,tags=@tags,focus_tags=@focus_tags where id = @id"
                 .Replace("@description",study.Description.SqlOrNull())
                 .Replace("@summaryFEN",study.SummaryFEN.SqlOrNull())
                 .Replace("@tags", string.Join(",", study.Tags).SqlOrNull())
                 .Replace("@id",study.Id.SqlOrNull())
-                .Replace("@score",study.Score.ToString())
                 .Replace("@focus_tags", string.Join(",", study.FocusTags).SqlOrNull());
             using (var command = new SqlCommand(query, connection))
             {

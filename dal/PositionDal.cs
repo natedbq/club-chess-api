@@ -180,8 +180,8 @@ namespace chess.api.dal
 
         private string New(Position position, Guid userId)
         {
-            var query = ("insert into Position (id,title,description,moveName,moveFEN,parentId,move_from,move_to,plans,tags,isKeyPosition,lastStudied,mistakes,isActive) "
-                + "values ('@id',@title,@description,@moveName,@moveFEN,@parentId,@from,@to,@plans,@tags,@isKeyPosition,@lastStudied,@mistakes,@isActive);\n" +
+            var query = ("insert into Position (id,title,description,moveName,moveFEN,parentId,move_from,move_to,plans,tags,isKeyPosition,lastStudied,isActive) "
+                + "values ('@id',@title,@description,@moveName,@moveFEN,@parentId,@from,@to,@plans,@tags,@isKeyPosition,@lastStudied,@isActive);\n" +
                 $"insert into userPositionStats (positionId, userId, mistakes, lastStudied) values ('{position.Id}','{userId}',0,'{DateTime.Now}');");
             query = query.Replace("@id", position.Id.ToString())
                 .Replace("@title", position.Title.SqlOrNull())

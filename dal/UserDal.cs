@@ -18,7 +18,7 @@ namespace chess.api.dal
             _sqlConnectionString = "Server=localhost\\SQLEXPRESS;Database=chess;Trusted_Connection=True;TrustServerCertificate=True";
         }
 
-        public async Task<Guid> Authenticate(string username, string password)
+        public async Task<SimpleUser> Authenticate(string username, string password)
         {
             using (var connection = new SqlConnection(_sqlConnectionString))
             {
@@ -39,7 +39,7 @@ namespace chess.api.dal
                             {
                                 var id = reader.GetGuid(1);
                                 reader.Close();
-                                return id;
+                                return await GetSimpleUserById(id);
                             }
                             else
                             {
@@ -51,6 +51,47 @@ namespace chess.api.dal
                 }
             }
             throw new FailedToAuthenticateUserException();
+        }
+
+        public async Task<IList<ClubInvite>> GetInvitesForUser(Guid userId)
+        {
+            IList<ClubInvite> invites = new List<ClubInvite>();
+
+            try
+            {
+                using (var connection = new SqlConnection(_sqlConnectionString))
+                {
+                    await connection.OpenAsync();
+
+                    var query = $"select toUsername, fromUsername, clubId, Message, (select name from club where id = clubId)," 
+                        +"(select picUrl from club where id = clubId) from ClubInvite where toUsername = (select username from [user] where id = @userId)"
+                        .Replace("@userId", userId.SqlOrNull());
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var invite = new ClubInvite();
+                                invite.ToUsername = reader.GetString(0);
+                                invite.FromUsername = reader.GetString(1);
+                                invite.ClubId = reader.GetGuid(2);
+                                invite.Message = reader.GetString(3);
+                                invite.ClubName = reader.GetString(4);
+                                invite.ClubPic = reader.GetString(5);
+                                invites.Add(invite);
+                            }
+                            reader.Close();
+                        }
+                    }
+                }
+
+                return invites;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
         public async Task<User> GetUserById(Guid userId)
@@ -76,7 +117,7 @@ namespace chess.api.dal
                                 user.Username = reader.GetString(0);
                                 user.FirstName = reader.GetString(1);
                                 user.LastName = reader.GetString(2);
-                                user.Studies = _studyRepository.GetStudies(userId);
+                                user.Studies = await _studyRepository.GetStudies(userId);
                                 reader.Close();
                             }
                             else

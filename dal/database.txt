@@ -31,8 +31,15 @@ create table StudyUser (
 );
 
 create table ClubInvite (
-	ToUser uniqueIdentifier,
-	FromUser uniqueIdentifier,
+	ToUsername varchar(25),
+	FromUsername varchar(25),
+	ClubId uniqueIdentifier,
+	Message varchar(max)
+);
+
+create table ClubRequest (
+	FromUsername varchar(25),
+	FromUsername varchar(25),
 	ClubId uniqueIdentifier,
 	Message varchar(max)
 );

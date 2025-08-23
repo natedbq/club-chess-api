@@ -18,17 +18,18 @@ namespace chess.api.repository
             }
         }
 
-        public void Delete(Guid id)
+        public async Task Delete(Guid id)
         {
-            var study = dal.GetById(id);
+            var study = await dal.GetById(id);
             dal.Delete(id);
 
             positionDal.Delete(study.PositionId.Value);
         }
 
-        public Study GetStudyById(Guid id, Guid userId = default(Guid)) {
-            var study = dal.GetById(id, userId);
+        public async Task<Study> GetStudyById(Guid id, Guid userId = default(Guid)) {
+            var study = await dal.GetById(id, userId);
             study.Position = positionDal.GetById(study.PositionId.Value,userId,0);
+
             return study;
         }
 

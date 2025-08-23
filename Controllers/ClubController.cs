@@ -1,6 +1,7 @@
 ﻿using chess.api.dal;
 using chess.api.models;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace chess.api.Controllers
 {
@@ -25,6 +26,14 @@ namespace chess.api.Controllers
         {
             var clubs = await _clubDal.GetClubs();
             return clubs;
+        }
+
+
+        [HttpGet("{clubId}/invites")]
+        public async Task<IList<ClubInvite>> getInvites(Guid clubId)
+        {
+            var invites = await _clubDal.GetInvitesForClub(clubId);
+            return invites;
         }
 
 
@@ -55,15 +64,38 @@ namespace chess.api.Controllers
         }
 
         [HttpPost("{clubId}/add/{username}")]
-        public async Task AddMember(Guid clubId, string username)
+        public async Task<HttpStatusCode> AddMember(Guid clubId, string username)
         {
             await _clubDal.AddMember(clubId, username);
+            return HttpStatusCode.NoContent;
         }
 
         [HttpPost("{clubId}/remove/{username}")]
-        public async Task RemoveMember(Guid clubId, string username)
+        public async Task<HttpStatusCode> RemoveMember(Guid clubId, string username)
         {
-            await _clubDal.AddMember(clubId, username);
+            await _clubDal.RemoveMember(clubId, username);
+            return HttpStatusCode.NoContent;
+        }
+
+        [HttpPost("{clubId}/declineInvite/{username}")]
+        public async Task<HttpStatusCode> DeclineInvite(Guid clubId, string username)
+        {
+            await _clubDal.DeclineInvite(clubId, username);
+            return HttpStatusCode.NoContent;
+        }
+
+        [HttpPost("requestToJoin")]
+        public async Task<HttpStatusCode> RequestToJoin(RequestToJoinModel request)
+        {
+            await _clubDal.RequestToJoin(request);
+            return HttpStatusCode.NoContent;
+        }
+
+        [HttpPost("inviteToJoin")]
+        public async Task<HttpStatusCode> InviteToJoin(InviteToJoinModel request)
+        {
+            await _clubDal.InviteToJoin(request);
+            return HttpStatusCode.NoContent;
         }
 
         [HttpGet("{clubId}/hasMember/{userId}")]
@@ -72,6 +104,21 @@ namespace chess.api.Controllers
             var hasMember = await _clubDal.HasMember(clubId, userId);
             return hasMember;
         }
+    }
+
+
+    public class InviteToJoinModel
+    {
+        public string ToUsername { get; set; }
+        public string FromUsername { get; set; }
+        public Guid ClubId { get; set; }
+        public string Message { get; set; }
+    }
+    public class RequestToJoinModel
+    {
+        public string FromUsername { get; set; }
+        public Guid ClubId { get; set; }
+        public string Message { get; set; }
     }
 
     public class ClubPostModel

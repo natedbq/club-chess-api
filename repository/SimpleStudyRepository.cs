@@ -16,7 +16,7 @@ namespace ChessApi.repository
 
 
 
-        public IList<SimpleStudy> GetStudies(Guid userId)
+        public async Task<IList<SimpleStudy>> GetStudies(Guid userId)
         {
             var studies = dal.GetStudiesByUserId(userId);
             var mapper = new Mapper(new MapperConfiguration(cfg =>
@@ -37,7 +37,7 @@ namespace ChessApi.repository
                 {
                     if (simp.Score == -1)
                     {
-                        simp.Score = StudyAccuracyCache.GetAccuracy(simp.Id);
+                        simp.Score = await StudyAccuracyCache.GetAccuracy(simp.Id, userId);
                         dal.UpdateScore(simp.Id, userId, simp.Score.Value);
                     }
                 }
