@@ -3,6 +3,7 @@ using chess.api.models;
 using chess.api.repository;
 using ChessApi.repository;
 using HealthTrackerApi.Controllers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -21,6 +22,7 @@ namespace chess.api.Controllers
             positionRepo = new PositionRepository();
         }
 
+        [Authorize]
         [HttpPut("{positionId}/study/{userId}")]
         public async Task<HttpStatusCode> StudyPosition(Guid positionId, Guid userId)
         {
@@ -29,6 +31,7 @@ namespace chess.api.Controllers
             return HttpStatusCode.NoContent;
         }
 
+        [Authorize]
         [HttpPut("{positionId}/mistake/{userId}")]
         public HttpStatusCode MistakePosition(Guid positionId, Guid userId)
         {
@@ -36,6 +39,8 @@ namespace chess.api.Controllers
 
             return HttpStatusCode.NoContent;
         }
+
+        [Authorize]
         [HttpPut("{positionId}/correct/{userId}")]
         public HttpStatusCode CorrectPosition(Guid positionId, Guid userId)
         {
@@ -44,6 +49,7 @@ namespace chess.api.Controllers
             return HttpStatusCode.NoContent;
         }
 
+        [Authorize]
         [HttpPost("delete/{id}")]
         public HttpStatusCode DeletePosition(Guid id)
         {
@@ -51,6 +57,7 @@ namespace chess.api.Controllers
             return HttpStatusCode.NoContent;
         }
 
+        [Authorize]
         [HttpPost]
         public HttpStatusCode SavePosition([FromBody] Position position, Guid userId)
         {
@@ -59,6 +66,7 @@ namespace chess.api.Controllers
         }
 
 
+        [Authorize]
         [HttpGet("{id}")]
         public Position GetPosition(Guid id, [FromQuery] Guid userId, [FromQuery] int depth = 0)
         {
@@ -69,6 +77,7 @@ namespace chess.api.Controllers
             return positionRepo.GetById(id, userId, depth);
         }
 
+        [Authorize]
         [HttpGet("parentId/{id}")]
         public IList<Position> GetPositionByParentId(Guid id, [FromQuery] Guid userId, [FromQuery] int depth = 0)
         {

@@ -1,5 +1,6 @@
 ﻿using chess.api.dal;
 using chess.api.models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -14,6 +15,7 @@ namespace chess.api.Controllers
 
 
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<Club> Club(Guid id, [FromQuery] Guid userId = default(Guid))
         {
@@ -21,6 +23,7 @@ namespace chess.api.Controllers
             return club;
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<IList<Club>> Clubs()
         {
@@ -29,6 +32,7 @@ namespace chess.api.Controllers
         }
 
 
+        [Authorize]
         [HttpGet("{clubId}/invites")]
         public async Task<IList<ClubInvite>> getInvites(Guid clubId)
         {
@@ -37,6 +41,7 @@ namespace chess.api.Controllers
         }
 
 
+        [Authorize]
         [HttpGet("user/{id}")]
         public async Task<IList<Club>> ClubsByUserId(Guid userId)
         {
@@ -44,6 +49,7 @@ namespace chess.api.Controllers
             return clubs;
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<Guid> Club(ClubPostModel model)
         {
@@ -51,18 +57,21 @@ namespace chess.api.Controllers
             return clubId;
         }
 
+        [Authorize]
         [HttpPost("{clubId}/addStudy/{studyId}")]
         public async Task AddStudy(Guid clubId, Guid studyId)
         {
             await _clubDal.AddStudy(clubId, studyId);
         }
 
+        [Authorize]
         [HttpPost("{clubId}/removeStudy/{studyId}")]
         public async Task RemoveStudy(Guid clubId, Guid studyId)
         {
             await _clubDal.RemoveStudy(clubId, studyId);
         }
 
+        [Authorize]
         [HttpPost("{clubId}/add/{username}")]
         public async Task<HttpStatusCode> AddMember(Guid clubId, string username)
         {
@@ -70,6 +79,7 @@ namespace chess.api.Controllers
             return HttpStatusCode.NoContent;
         }
 
+        [Authorize]
         [HttpPost("{clubId}/remove/{username}")]
         public async Task<HttpStatusCode> RemoveMember(Guid clubId, string username)
         {
@@ -77,6 +87,7 @@ namespace chess.api.Controllers
             return HttpStatusCode.NoContent;
         }
 
+        [Authorize]
         [HttpPost("{clubId}/declineInvite/{username}")]
         public async Task<HttpStatusCode> DeclineInvite(Guid clubId, string username)
         {
@@ -84,6 +95,7 @@ namespace chess.api.Controllers
             return HttpStatusCode.NoContent;
         }
 
+        [Authorize]
         [HttpPost("requestToJoin")]
         public async Task<HttpStatusCode> RequestToJoin(RequestToJoinModel request)
         {
@@ -91,6 +103,7 @@ namespace chess.api.Controllers
             return HttpStatusCode.NoContent;
         }
 
+        [Authorize]
         [HttpPost("inviteToJoin")]
         public async Task<HttpStatusCode> InviteToJoin(InviteToJoinModel request)
         {
@@ -98,6 +111,7 @@ namespace chess.api.Controllers
             return HttpStatusCode.NoContent;
         }
 
+        [Authorize]
         [HttpGet("{clubId}/hasMember/{userId}")]
         public async Task<bool> HasMember(Guid clubId, Guid userId)
         {
