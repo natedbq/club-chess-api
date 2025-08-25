@@ -26,7 +26,8 @@ namespace chess.api.dal
                 var valid = false;
                 string passwordHash = BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
 
-                var query = $"select password, id from [user] where username = {username.SqlOrNull()}";
+                var query = $"select password, id from [user] where username = {username.SqlOrNull()};"
+                    + $"delete from Refresh where userId = (select id from [User] where username = {username.SqlOrNull()})";
                 using (var command = new SqlCommand(query, connection))
                 {
                     using (var reader = command.ExecuteReader())

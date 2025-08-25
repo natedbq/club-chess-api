@@ -3,8 +3,12 @@ using chess.api.dal;
 using chess.api.models;
 using chess.api.repository;
 using ChessApi.repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace chess.api.Controllers
 {
@@ -20,13 +24,17 @@ namespace chess.api.Controllers
             _logger = logger;
         }
 
-        [HttpGet("{id}")]
-        public async Task<User> User(Guid id)
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<User> GetMyProfile()
         {
-            var user = await userDal.GetUserById(id);
+            var id = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            var userId = new Guid(id);
+            var user = await userDal.GetUserById(userId);
             return user;
         }
 
+        [Authorize]
         [HttpGet("{id}/invites")]
         public async Task<IList<ClubInvite>> GetInvites(Guid id)
         {
@@ -34,18 +42,12 @@ namespace chess.api.Controllers
             return invites;
         }
 
+        [Authorize]
         [HttpPost]
-        public async Task<Guid> User(NewUserModel user)
+        public async Task<Guid> CreateUser(NewUserModel user)
         {
             var userId = await userDal.CreateUser(user, user.Password);
             return userId;
-        }
-
-        [HttpPost("auth")]
-        public async Task<SimpleUser> Authenticate(UsernameAndPassword details)
-        {
-            var user = await userDal.Authenticate(details.Username, details.Password);
-            return user;
         }
     }
 
@@ -54,12 +56,6 @@ namespace chess.api.Controllers
         public string Username { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public string Password { get; set; }
-    }
-
-    public class UsernameAndPassword
-    {
-        public string Username { get; set; }
         public string Password { get; set; }
     }
 }

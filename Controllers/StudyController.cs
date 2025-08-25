@@ -3,6 +3,7 @@ using chess.api.common;
 using chess.api.models;
 using chess.api.repository;
 using ChessApi.repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -24,6 +25,7 @@ namespace HealthTrackerApi.Controllers
             simpleStudyRepo = new SimpleStudyRepository();
         }
 
+        [Authorize]
         [HttpPost("{studyId}/import/{userId}")]
         public HttpStatusCode Import(Guid userId, Guid studyId)
         {
@@ -31,6 +33,7 @@ namespace HealthTrackerApi.Controllers
             return HttpStatusCode.NoContent;
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<HttpStatusCode> SaveStudy([FromBody] Study study)
         {
@@ -38,6 +41,7 @@ namespace HealthTrackerApi.Controllers
             return HttpStatusCode.NoContent;
         }
 
+        [Authorize]
         [HttpPut("{id}/study/{userId}")]
         public HttpStatusCode Study(Guid id, Guid userId)
         {
@@ -46,6 +50,7 @@ namespace HealthTrackerApi.Controllers
             return HttpStatusCode.NoContent;
         }
 
+        [Authorize]
         [HttpPost("delete/{id}")]
         public HttpStatusCode DeleteStudy(Guid id)
         {
@@ -53,6 +58,7 @@ namespace HealthTrackerApi.Controllers
             return HttpStatusCode.NoContent;
         }
 
+        [Authorize]
         [HttpGet("SimpleStudies/{userId}")]
         public async Task<IList<SimpleStudy>> GetSimpleStudies(Guid userId)
         {
@@ -74,6 +80,7 @@ namespace HealthTrackerApi.Controllers
         }
 
 
+        [Authorize]
         [HttpGet("{studyId}")]
         public async Task<Study> GetStudies(Guid studyId, [FromQuery]  Guid userId = default(Guid))
         {

@@ -1,3 +1,9 @@
+create table Refresh (
+	RefreshToken uniqueIdentifier,
+	UserId uniqueIdentifier,
+	ExpiresOn datetime
+);
+
 create table Club (
 	Id uniqueIdentifier,
 	Name Varchar(60),

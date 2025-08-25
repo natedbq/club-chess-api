@@ -3,6 +3,7 @@ using chess.api.models;
 using chess.api.repository;
 using ChessApi.repository;
 using HealthTrackerApi.Controllers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -21,6 +22,7 @@ namespace chess.api.Controllers
         }
 
 
+        [Authorize]
         [HttpGet("eval")]
         public async Task<SinglePointEval> Eval([FromQuery] string fen, [FromQuery] int depth = 20)
         {
@@ -34,6 +36,7 @@ namespace chess.api.Controllers
             return result;
         }
 
+        [Authorize]
         [HttpGet("engine")]
         public async Task<Evaluation> Engine([FromQuery] string fen, [FromQuery] int depth = 20)
         {
