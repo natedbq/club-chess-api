@@ -1,11 +1,15 @@
 ﻿
 using chess.api.common;
+using chess.api.Exceptions;
 using chess.api.models;
 using chess.api.repository;
+using chess.api.Validations;
 using ChessApi.repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Security.Claims;
 
 namespace HealthTrackerApi.Controllers
 {
@@ -26,9 +30,12 @@ namespace HealthTrackerApi.Controllers
         }
 
         [Authorize]
-        [HttpPost("{studyId}/import/{userId}")]
-        public HttpStatusCode Import(Guid userId, Guid studyId)
+        [HttpPost("{studyId}/import/me")]
+        public HttpStatusCode Import(Guid studyId)
         {
+            var userId = GetUserId();
+            BusinessValidation.Study.UserCanViewStudy(studyId, userId);
+
             portStudyTo.PortToUser(studyId, userId);
             return HttpStatusCode.NoContent;
         }
@@ -37,14 +44,23 @@ namespace HealthTrackerApi.Controllers
         [HttpPost]
         public async Task<HttpStatusCode> SaveStudy([FromBody] Study study)
         {
+            var userId = GetUserId();
+            study.Owner = new SimpleUser()
+            {
+                Id = userId
+            };
+
             await studyRepo.Save(study);
             return HttpStatusCode.NoContent;
         }
 
         [Authorize]
-        [HttpPut("{id}/study/{userId}")]
-        public HttpStatusCode Study(Guid id, Guid userId)
+        [HttpPut("{id}/study")]
+        public HttpStatusCode Study(Guid id)
         {
+            var userId = GetUserId();
+            BusinessValidation.Study.UserCanViewStudy(userId, id);
+
             studyRepo.Study(id, userId);
 
             return HttpStatusCode.NoContent;
@@ -54,16 +70,20 @@ namespace HealthTrackerApi.Controllers
         [HttpPost("delete/{id}")]
         public HttpStatusCode DeleteStudy(Guid id)
         {
+            var userId = GetUserId();
+            BusinessValidation.Study.UserCanEditStudy(userId, id);
+
             studyRepo.Delete(id);
             return HttpStatusCode.NoContent;
         }
 
         [Authorize]
-        [HttpGet("SimpleStudies/{userId}")]
-        public async Task<IList<SimpleStudy>> GetSimpleStudies(Guid userId)
+        [HttpGet("SimpleStudies/me")]
+        public async Task<IList<SimpleStudy>> GetSimpleStudies()
         {
             try
             {
+                var userId = GetUserId();
                 return await simpleStudyRepo.GetStudies(userId);
             }
             catch (Exception ex)
@@ -82,10 +102,18 @@ namespace HealthTrackerApi.Controllers
 
         [Authorize]
         [HttpGet("{studyId}")]
-        public async Task<Study> GetStudies(Guid studyId, [FromQuery]  Guid userId = default(Guid))
+        public async Task<Study> GetStudies(Guid studyId)
         {
+            var userId = GetUserId();
+            BusinessValidation.Study.UserCanViewStudy(userId, studyId);
+
             StudyAccuracyCache.Invalidate(studyId, userId);
             return await studyRepo.GetStudyById(studyId,userId);
+        }
+
+        private Guid GetUserId()
+        {
+            return new Guid(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub));
         }
     }
 }

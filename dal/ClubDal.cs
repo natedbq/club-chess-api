@@ -1,4 +1,5 @@
-﻿using chess.api.configuration;
+﻿using AutoMapper.Execution;
+using chess.api.configuration;
 using chess.api.Controllers;
 using chess.api.models;
 using ChessApi.repository;
@@ -151,9 +152,22 @@ namespace chess.api.dal
                 {
                     command.ExecuteNonQuery();
                 }
+
+                query = $"select username from [user] where id = '{club.OwnerId}';";
+                using (var command = new SqlCommand(query, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            var username = reader.GetString(0);
+                            await AddMember(id, username);
+                        }
+                        reader.Close();
+                    }
+                }
             }
 
-            await AddMember(id, club.username);
 
             return id;
         }

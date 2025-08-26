@@ -6,6 +6,8 @@ using HealthTrackerApi.Controllers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace chess.api.Controllers
 {
@@ -23,27 +25,30 @@ namespace chess.api.Controllers
         }
 
         [Authorize]
-        [HttpPut("{positionId}/study/{userId}")]
-        public async Task<HttpStatusCode> StudyPosition(Guid positionId, Guid userId)
+        [HttpPut("{positionId}/study/me")]
+        public async Task<HttpStatusCode> StudyPosition(Guid positionId)
         {
+            var userId = GetUserId();
             positionRepo.StudyPosition(positionId, userId);
 
             return HttpStatusCode.NoContent;
         }
 
         [Authorize]
-        [HttpPut("{positionId}/mistake/{userId}")]
-        public HttpStatusCode MistakePosition(Guid positionId, Guid userId)
+        [HttpPut("{positionId}/mistake/me")]
+        public HttpStatusCode MistakePosition(Guid positionId)
         {
+            var userId = GetUserId();
             positionRepo.Mistake(positionId, userId);
 
             return HttpStatusCode.NoContent;
         }
 
         [Authorize]
-        [HttpPut("{positionId}/correct/{userId}")]
-        public HttpStatusCode CorrectPosition(Guid positionId, Guid userId)
+        [HttpPut("{positionId}/correct/me")]
+        public HttpStatusCode CorrectPosition(Guid positionId)
         {
+            var userId = GetUserId();
             positionRepo.Correct(positionId, userId);
 
             return HttpStatusCode.NoContent;
@@ -86,6 +91,11 @@ namespace chess.api.Controllers
                 throw new ArgumentException("[depth] must be <= 10");
             }
             return positionRepo.GetByParentId(id, userId, depth);
+        }
+
+        private Guid GetUserId()
+        {
+            return new Guid(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub));
         }
     }
 }
