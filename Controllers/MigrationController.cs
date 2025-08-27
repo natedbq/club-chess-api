@@ -1,4 +1,5 @@
 ﻿
+using chess.api.Exceptions;
 using chess.api.models;
 using chess.api.repository;
 using chess.api.services;
@@ -27,6 +28,13 @@ namespace HealthTrackerApi.Controllers
             var uciMigration = new MigrationUCI();
             uciMigration.Execute();
             return HttpStatusCode.NoContent;
+        }
+
+        [Authorize]
+        [HttpPost("error")]
+        public async Task<HttpStatusCode> FakeError(bool fail)
+        {
+            throw new BusinessRuleException("An error was thrown! How could this happen!?");
         }
     }
 }
