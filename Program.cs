@@ -1,5 +1,6 @@
 
 
+using chess.api.common;
 using chess.api.services;
 using ChessApi.dal;
 using ChessApi.repository;
@@ -109,6 +110,8 @@ app.UseCors("AllowSpecificOrigin");
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseExceptionHandleMiddleware();
 
 app.UseCors("AllowAngularApp");
 
