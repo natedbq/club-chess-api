@@ -55,10 +55,10 @@ namespace chess.api.Controllers
         }
 
         [Authorize]
-        [HttpPost("delete/{id}")]
-        public HttpStatusCode DeletePosition(Guid id)
+        [HttpPost("delete/{positionId}")]
+        public HttpStatusCode DeletePosition(Guid positionId)
         {
-            positionRepo.Delete(id);
+            positionRepo.Delete(positionId);
             return HttpStatusCode.NoContent;
         }
 
@@ -72,25 +72,27 @@ namespace chess.api.Controllers
 
 
         [Authorize]
-        [HttpGet("{id}")]
-        public Position GetPosition(Guid id, [FromQuery] Guid userId, [FromQuery] int depth = 0)
+        [HttpGet("{positionId}")]
+        public Position GetPosition(Guid positionId, [FromQuery] int depth = 0)
         {
-            if(depth > 10)
+            var userId = GetUserId();
+            if (depth > 10)
             {
                 throw new ArgumentException("[depth] must be <= 10");
             }
-            return positionRepo.GetById(id, userId, depth);
+            return positionRepo.GetById(positionId, userId, depth);
         }
 
         [Authorize]
-        [HttpGet("parentId/{id}")]
-        public IList<Position> GetPositionByParentId(Guid id, [FromQuery] Guid userId, [FromQuery] int depth = 0)
+        [HttpGet("parentId/{positionId}")]
+        public IList<Position> GetPositionByParentId(Guid positionId, [FromQuery] int depth = 0)
         {
             if (depth > 10)
             {
                 throw new ArgumentException("[depth] must be <= 10");
             }
-            return positionRepo.GetByParentId(id, userId, depth);
+            var userId = GetUserId();
+            return positionRepo.GetByParentId(positionId, userId, depth);
         }
 
         private Guid GetUserId()

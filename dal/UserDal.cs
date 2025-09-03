@@ -1,5 +1,5 @@
 ﻿using chess.api.configuration;
-using chess.api.Controllers;
+using chess.api.Dto;
 using chess.api.Exceptions;
 using chess.api.models;
 using ChessApi.repository;
@@ -210,7 +210,7 @@ namespace chess.api.dal
             return users;
         }
 
-        public async Task<Guid> CreateUser(NewUserModel user, string password)
+        public async Task<Guid> CreateUser(NewUserDto user, string password)
         {
             using (var connection = new SqlConnection(_sqlConnectionString))
             {

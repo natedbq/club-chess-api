@@ -55,7 +55,7 @@ namespace HealthTrackerApi.Controllers
         }
 
         [Authorize]
-        [HttpPut("{id}/study")]
+        [HttpPut("{id}/study/me")]
         public HttpStatusCode Study(Guid id)
         {
             var userId = GetUserId();
@@ -101,8 +101,8 @@ namespace HealthTrackerApi.Controllers
 
 
         [Authorize]
-        [HttpGet("{studyId}")]
-        public async Task<Study> GetStudies(Guid studyId)
+        [HttpGet("{studyId}/me")]
+        public async Task<Study> GetStudy(Guid studyId)
         {
             var userId = GetUserId();
             BusinessValidation.Study.UserCanViewStudy(userId, studyId);

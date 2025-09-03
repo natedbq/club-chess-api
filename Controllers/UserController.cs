@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using chess.api.Dto;
 
 namespace chess.api.Controllers
 {
@@ -44,18 +45,10 @@ namespace chess.api.Controllers
 
         [Authorize]
         [HttpPost]
-        public async Task<Guid> CreateUser(NewUserModel user)
+        public async Task<Guid> CreateUser(NewUserDto user)
         {
             var userId = await userDal.CreateUser(user, user.Password);
             return userId;
         }
-    }
-
-    public class NewUserModel
-    {
-        public string Username { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string Password { get; set; }
     }
 }

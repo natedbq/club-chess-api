@@ -1,4 +1,5 @@
 ﻿using chess.api.dal;
+using chess.api.Dto;
 using chess.api.models;
 using chess.api.Validations;
 using Microsoft.AspNetCore.Authorization;
@@ -16,7 +17,14 @@ namespace chess.api.Controllers
         private readonly ClubDal _clubDal = new ClubDal();
         public ClubController() { }
 
-
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IList<Club>> ClubsByUser()
+        {
+            var userId = GetUserId();
+            var clubs = await _clubDal.GetClubsByUserId(userId);
+            return clubs;
+        }
 
         [Authorize]
         [HttpGet("{clubId}")]
@@ -52,18 +60,10 @@ namespace chess.api.Controllers
         }
 
 
-        [Authorize]
-        [HttpGet("me")]
-        public async Task<IList<Club>> ClubsByUser()
-        {
-            var userId = GetUserId();
-            var clubs = await _clubDal.GetClubsByUserId(userId);
-            return clubs;
-        }
 
         [Authorize]
         [HttpPost]
-        public async Task<Guid> Club(ClubPostModel model)
+        public async Task<Guid> Club(NewClubDto model)
         {
             model.OwnerId = GetUserId();
             var clubId = await _clubDal.CreateClub(model);
@@ -93,7 +93,18 @@ namespace chess.api.Controllers
         }
 
         [Authorize]
-        [HttpPost("{clubId}/add/{username}")]
+        [HttpPost("{clubId}/removeMember/{username}")]
+        public async Task<HttpStatusCode> RemoveMember(Guid clubId, string username)
+        {
+            var userId = GetUserId();
+            BusinessValidation.Club.UserCanEditClub(userId, clubId);
+
+            await _clubDal.RemoveMember(clubId, username);
+            return HttpStatusCode.NoContent;
+        }
+
+        [Authorize]
+        [HttpPost("{clubId}/acceptInvite/{username}")]
         public async Task<HttpStatusCode> AddMember(Guid clubId, string username)
         {
             var userId = GetUserId();
@@ -101,17 +112,6 @@ namespace chess.api.Controllers
             BusinessValidation.User.UserIsNamed(userId, username);
 
             await _clubDal.AddMember(clubId, username);
-            return HttpStatusCode.NoContent;
-        }
-
-        [Authorize]
-        [HttpPost("{clubId}/remove/{username}")]
-        public async Task<HttpStatusCode> RemoveMember(Guid clubId, string username)
-        {
-            var userId = GetUserId();
-            BusinessValidation.Club.UserCanEditClub(userId, clubId);
-
-            await _clubDal.RemoveMember(clubId, username);
             return HttpStatusCode.NoContent;
         }
 
@@ -127,24 +127,24 @@ namespace chess.api.Controllers
         }
 
         [Authorize]
-        [HttpPost("requestToJoin")]
-        public async Task<HttpStatusCode> RequestToJoin(RequestToJoinModel request)
-        {
-            var userId = GetUserId();
-            BusinessValidation.User.UserIsNamed(userId, request.FromUsername);
-
-            await _clubDal.RequestToJoin(request);
-            return HttpStatusCode.NoContent;
-        }
-
-        [Authorize]
         [HttpPost("inviteToJoin")]
-        public async Task<HttpStatusCode> InviteToJoin(InviteToJoinModel request)
+        public async Task<HttpStatusCode> InviteToJoin(InviteToJoinDto request)
         {
             var userId = GetUserId();
             BusinessValidation.Club.UserCanEditClub(userId, request.ClubId);
 
             await _clubDal.InviteToJoin(request);
+            return HttpStatusCode.NoContent;
+        }
+
+        [Authorize]
+        [HttpPost("requestToJoin")]
+        public async Task<HttpStatusCode> RequestToJoin(RequestToJoinDto request)
+        {
+            var userId = GetUserId();
+            BusinessValidation.User.UserIsNamed(userId, request.FromUsername);
+
+            await _clubDal.RequestToJoin(request);
             return HttpStatusCode.NoContent;
         }
 
@@ -162,27 +162,5 @@ namespace chess.api.Controllers
         {
             return new Guid(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub));
         }
-    }
-
-
-    public class InviteToJoinModel
-    {
-        public string ToUsername { get; set; }
-        public string FromUsername { get; set; }
-        public Guid ClubId { get; set; }
-        public string Message { get; set; }
-    }
-    public class RequestToJoinModel
-    {
-        public string FromUsername { get; set; }
-        public Guid ClubId { get; set; }
-        public string Message { get; set; }
-    }
-
-    public class ClubPostModel
-    {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public Guid OwnerId { get; set; }
     }
 }

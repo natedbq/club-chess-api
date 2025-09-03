@@ -1,6 +1,7 @@
 ﻿using AutoMapper.Execution;
 using chess.api.configuration;
 using chess.api.Controllers;
+using chess.api.Dto;
 using chess.api.models;
 using ChessApi.repository;
 using Microsoft.Data.SqlClient;
@@ -36,7 +37,7 @@ namespace chess.api.dal
             }
         }
 
-        public async Task InviteToJoin(InviteToJoinModel request)
+        public async Task InviteToJoin(InviteToJoinDto request)
         {
             using (var connection = new SqlConnection(_sqlConnectionString))
             {
@@ -55,7 +56,7 @@ namespace chess.api.dal
             }
         }
 
-        public async Task RequestToJoin(RequestToJoinModel request)
+        public async Task RequestToJoin(RequestToJoinDto request)
         {
             using (var connection = new SqlConnection(_sqlConnectionString))
             {
@@ -136,7 +137,7 @@ namespace chess.api.dal
             }
         }
 
-        public async Task<Guid> CreateClub(ClubPostModel club)
+        public async Task<Guid> CreateClub(NewClubDto club)
         {
             var id = Guid.NewGuid();
             using (var connection = new SqlConnection(_sqlConnectionString))
@@ -236,7 +237,7 @@ namespace chess.api.dal
                 await connection.OpenAsync();
 
 
-                var query = $"select id, name, description, owner, picUrl from Club where id in (select userid from ClubUser where clubId = {userId.SqlOrNull()})";
+                var query = $"select id, name, description, owner, picUrl from Club where id in (select clubId from ClubUser where userId = {userId.SqlOrNull()})";
                 using (var command = new SqlCommand(query, connection))
                 {
                     using (var reader = command.ExecuteReader())

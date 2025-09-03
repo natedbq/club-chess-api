@@ -23,7 +23,8 @@ create table [User] (
 	FirstName varchar(25),
 	LastName varchar(25),
 	Password varchar(60),
-	picUrl varchar(250)
+	PicUrl varchar(250),
+	Roles varchar(200)
 );
 
 create table ClubUser (
