@@ -39,7 +39,7 @@ namespace chess.api.Controllers
             var refreshToken = _authDal.AddRefreshToken(user.Id);
             AddRefreshCookie(refreshToken);
 
-            return Ok(new { accessToken = new JwtSecurityTokenHandler().WriteToken(token) });
+            return Ok(new { accessToken = new JwtSecurityTokenHandler().WriteToken(token), expiresInMinutes = 5 });
         }
 
         [HttpPost("refresh")]
@@ -84,8 +84,8 @@ namespace chess.api.Controllers
             Response.Cookies.Append("refreshToken", refresh.ToString(), new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false,
-                SameSite = SameSiteMode.Lax,
+                Secure = true,
+                SameSite = SameSiteMode.None,
                 Expires = DateTime.UtcNow.AddDays(7)
             });
         }

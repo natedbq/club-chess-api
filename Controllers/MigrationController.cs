@@ -21,7 +21,7 @@ namespace HealthTrackerApi.Controllers
             _logger = logger;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost("uci")]
         public async Task<HttpStatusCode> Uci()
         {
@@ -30,7 +30,7 @@ namespace HealthTrackerApi.Controllers
             return HttpStatusCode.NoContent;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost("error")]
         public async Task<HttpStatusCode> FakeError(bool fail)
         {

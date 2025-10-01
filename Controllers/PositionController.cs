@@ -24,7 +24,7 @@ namespace chess.api.Controllers
             positionRepo = new PositionRepository();
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPut("{positionId}/study/me")]
         public async Task<HttpStatusCode> StudyPosition(Guid positionId)
         {
@@ -34,7 +34,7 @@ namespace chess.api.Controllers
             return HttpStatusCode.NoContent;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPut("{positionId}/mistake/me")]
         public HttpStatusCode MistakePosition(Guid positionId)
         {
@@ -44,7 +44,7 @@ namespace chess.api.Controllers
             return HttpStatusCode.NoContent;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPut("{positionId}/correct/me")]
         public HttpStatusCode CorrectPosition(Guid positionId)
         {
@@ -54,7 +54,7 @@ namespace chess.api.Controllers
             return HttpStatusCode.NoContent;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost("delete/{positionId}")]
         public HttpStatusCode DeletePosition(Guid positionId)
         {
@@ -62,7 +62,7 @@ namespace chess.api.Controllers
             return HttpStatusCode.NoContent;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost]
         public HttpStatusCode SavePosition([FromBody] Position position, Guid userId)
         {
@@ -71,7 +71,7 @@ namespace chess.api.Controllers
         }
 
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("{positionId}")]
         public Position GetPosition(Guid positionId, [FromQuery] int depth = 0)
         {
@@ -83,7 +83,7 @@ namespace chess.api.Controllers
             return positionRepo.GetById(positionId, userId, depth);
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("parentId/{positionId}")]
         public IList<Position> GetPositionByParentId(Guid positionId, [FromQuery] int depth = 0)
         {

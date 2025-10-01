@@ -25,7 +25,7 @@ namespace chess.api.Controllers
             _logger = logger;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("me")]
         public async Task<User> GetMyProfile()
         {
@@ -35,7 +35,7 @@ namespace chess.api.Controllers
             return user;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("{id}/invites")]
         public async Task<IList<ClubInvite>> GetInvites(Guid id)
         {
@@ -43,7 +43,7 @@ namespace chess.api.Controllers
             return invites;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost]
         public async Task<Guid> CreateUser(NewUserDto user)
         {
