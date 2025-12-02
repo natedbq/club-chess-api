@@ -1,5 +1,6 @@
 ﻿using Azure.Core;
 using chess.api.dal;
+using chess.api.Dto;
 using chess.api.models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -19,7 +20,7 @@ namespace chess.api.Controllers
 
 
         [HttpPost()]
-        public async Task<IActionResult> Authenticate(UsernameAndPassword details)
+        public async Task<IActionResult> Authenticate(UsernameAndPasswordDto details)
         {
             var user = await _userDal.Authenticate(details.Username, details.Password);
 
@@ -38,32 +39,27 @@ namespace chess.api.Controllers
             var refreshToken = _authDal.AddRefreshToken(user.Id);
             AddRefreshCookie(refreshToken);
 
-            return Ok(new { accessToken = new JwtSecurityTokenHandler().WriteToken(token) });
+            return Ok(new { accessToken = new JwtSecurityTokenHandler().WriteToken(token), expiresInMinutes = 5 });
         }
 
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh()
         {
-            try
+            var refreshToken = new Guid(Request.Cookies["refreshToken"]); // if using cookies
+            var storedTokenData = _authDal.RotateRefreshToken(refreshToken);
+
+            var claims = new[]
             {
-                var refreshToken = new Guid(Request.Cookies["refreshToken"]); // if using cookies
-                var storedTokenData = _authDal.RotateRefreshToken(refreshToken);
+                new Claim(JwtRegisteredClaimNames.Sub, storedTokenData.UserId.ToString()),
+                new Claim(ClaimTypes.Role, "User")
+            };
 
-                var claims = new[]
-                {
-                    new Claim(JwtRegisteredClaimNames.Sub, storedTokenData.UserId.ToString()),
-                    new Claim(ClaimTypes.Role, "User")
-                };
+            var newAccessToken = GenerateToken(claims);
 
-                var newAccessToken = GenerateToken(claims);
+            AddRefreshCookie(storedTokenData.Token);
 
-                AddRefreshCookie(storedTokenData.Token);
-
-                return Ok(new { accessToken = new JwtSecurityTokenHandler().WriteToken(newAccessToken) });
-            }catch(Exception ex)
-            {
-                return Ok(ex);
-            }
+            return Ok(new { accessToken = new JwtSecurityTokenHandler().WriteToken(newAccessToken) });
+            
         }
 
         private JwtSecurityToken GenerateToken(Claim[] claims)
@@ -88,18 +84,10 @@ namespace chess.api.Controllers
             Response.Cookies.Append("refreshToken", refresh.ToString(), new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false,
-                SameSite = SameSiteMode.Lax,
+                Secure = true,
+                SameSite = SameSiteMode.None,
                 Expires = DateTime.UtcNow.AddDays(7)
             });
         }
-    }
-
-
-
-    public class UsernameAndPassword
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
     }
 }

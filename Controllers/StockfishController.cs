@@ -22,7 +22,7 @@ namespace chess.api.Controllers
         }
 
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("eval")]
         public async Task<SinglePointEval> Eval([FromQuery] string fen, [FromQuery] int depth = 20)
         {
@@ -36,7 +36,7 @@ namespace chess.api.Controllers
             return result;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("engine")]
         public async Task<Evaluation> Engine([FromQuery] string fen, [FromQuery] int depth = 20)
         {

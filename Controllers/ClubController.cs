@@ -1,4 +1,5 @@
 ﻿using chess.api.dal;
+using chess.api.Dto;
 using chess.api.models;
 using chess.api.Validations;
 using Microsoft.AspNetCore.Authorization;
@@ -16,9 +17,16 @@ namespace chess.api.Controllers
         private readonly ClubDal _clubDal = new ClubDal();
         public ClubController() { }
 
+        //[Authorize]
+        [HttpGet("me")]
+        public async Task<IList<Club>> ClubsByUser()
+        {
+            var userId = GetUserId();
+            var clubs = await _clubDal.GetClubsByUserId(userId);
+            return clubs;
+        }
 
-
-        [Authorize]
+        //[Authorize]
         [HttpGet("{clubId}")]
         public async Task<Club> Club(Guid clubId)
         {
@@ -31,7 +39,7 @@ namespace chess.api.Controllers
             return club;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet]
         public async Task<IList<Club>> Clubs()
         {
@@ -40,7 +48,7 @@ namespace chess.api.Controllers
         }
 
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("{clubId}/invites")]
         public async Task<IList<ClubInvite>> getInvites(Guid clubId)
         {
@@ -52,25 +60,17 @@ namespace chess.api.Controllers
         }
 
 
-        [Authorize]
-        [HttpGet("me")]
-        public async Task<IList<Club>> ClubsByUser()
-        {
-            var userId = GetUserId();
-            var clubs = await _clubDal.GetClubsByUserId(userId);
-            return clubs;
-        }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost]
-        public async Task<Guid> Club(ClubPostModel model)
+        public async Task<Guid> Club(NewClubDto model)
         {
             model.OwnerId = GetUserId();
             var clubId = await _clubDal.CreateClub(model);
             return clubId;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost("{clubId}/addStudy/{studyId}")]
         public async Task AddStudy(Guid clubId, Guid studyId)
         {
@@ -81,7 +81,7 @@ namespace chess.api.Controllers
             await _clubDal.AddStudy(clubId, studyId);
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost("{clubId}/removeStudy/{studyId}")]
         public async Task RemoveStudy(Guid clubId, Guid studyId)
         {
@@ -92,8 +92,19 @@ namespace chess.api.Controllers
             await _clubDal.RemoveStudy(clubId, studyId);
         }
 
-        [Authorize]
-        [HttpPost("{clubId}/add/{username}")]
+        //[Authorize]
+        [HttpPost("{clubId}/removeMember/{username}")]
+        public async Task<HttpStatusCode> RemoveMember(Guid clubId, string username)
+        {
+            var userId = GetUserId();
+            BusinessValidation.Club.UserCanEditClub(userId, clubId);
+
+            await _clubDal.RemoveMember(clubId, username);
+            return HttpStatusCode.NoContent;
+        }
+
+        //[Authorize]
+        [HttpPost("{clubId}/acceptInvite/{username}")]
         public async Task<HttpStatusCode> AddMember(Guid clubId, string username)
         {
             var userId = GetUserId();
@@ -104,18 +115,7 @@ namespace chess.api.Controllers
             return HttpStatusCode.NoContent;
         }
 
-        [Authorize]
-        [HttpPost("{clubId}/remove/{username}")]
-        public async Task<HttpStatusCode> RemoveMember(Guid clubId, string username)
-        {
-            var userId = GetUserId();
-            BusinessValidation.Club.UserCanEditClub(userId, clubId);
-
-            await _clubDal.RemoveMember(clubId, username);
-            return HttpStatusCode.NoContent;
-        }
-
-        [Authorize]
+        //[Authorize]
         [HttpPost("{clubId}/declineInvite/{username}")]
         public async Task<HttpStatusCode> DeclineInvite(Guid clubId, string username)
         {
@@ -126,20 +126,9 @@ namespace chess.api.Controllers
             return HttpStatusCode.NoContent;
         }
 
-        [Authorize]
-        [HttpPost("requestToJoin")]
-        public async Task<HttpStatusCode> RequestToJoin(RequestToJoinModel request)
-        {
-            var userId = GetUserId();
-            BusinessValidation.User.UserIsNamed(userId, request.FromUsername);
-
-            await _clubDal.RequestToJoin(request);
-            return HttpStatusCode.NoContent;
-        }
-
-        [Authorize]
+        //[Authorize]
         [HttpPost("inviteToJoin")]
-        public async Task<HttpStatusCode> InviteToJoin(InviteToJoinModel request)
+        public async Task<HttpStatusCode> InviteToJoin(InviteToJoinDto request)
         {
             var userId = GetUserId();
             BusinessValidation.Club.UserCanEditClub(userId, request.ClubId);
@@ -148,7 +137,18 @@ namespace chess.api.Controllers
             return HttpStatusCode.NoContent;
         }
 
-        [Authorize]
+        //[Authorize]
+        [HttpPost("requestToJoin")]
+        public async Task<HttpStatusCode> RequestToJoin(RequestToJoinDto request)
+        {
+            var userId = GetUserId();
+            BusinessValidation.User.UserIsNamed(userId, request.FromUsername);
+
+            await _clubDal.RequestToJoin(request);
+            return HttpStatusCode.NoContent;
+        }
+
+        //[Authorize]
         [HttpGet("{clubId}/hasMember/me")]
         public async Task<bool> HasMember(Guid clubId)
         {
@@ -162,27 +162,5 @@ namespace chess.api.Controllers
         {
             return new Guid(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub));
         }
-    }
-
-
-    public class InviteToJoinModel
-    {
-        public string ToUsername { get; set; }
-        public string FromUsername { get; set; }
-        public Guid ClubId { get; set; }
-        public string Message { get; set; }
-    }
-    public class RequestToJoinModel
-    {
-        public string FromUsername { get; set; }
-        public Guid ClubId { get; set; }
-        public string Message { get; set; }
-    }
-
-    public class ClubPostModel
-    {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public Guid OwnerId { get; set; }
     }
 }

@@ -29,7 +29,7 @@ namespace HealthTrackerApi.Controllers
             simpleStudyRepo = new SimpleStudyRepository();
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost("{studyId}/import/me")]
         public HttpStatusCode Import(Guid studyId)
         {
@@ -40,7 +40,7 @@ namespace HealthTrackerApi.Controllers
             return HttpStatusCode.NoContent;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost]
         public async Task<HttpStatusCode> SaveStudy([FromBody] Study study)
         {
@@ -54,8 +54,8 @@ namespace HealthTrackerApi.Controllers
             return HttpStatusCode.NoContent;
         }
 
-        [Authorize]
-        [HttpPut("{id}/study")]
+        //[Authorize]
+        [HttpPut("{id}/study/me")]
         public HttpStatusCode Study(Guid id)
         {
             var userId = GetUserId();
@@ -66,7 +66,7 @@ namespace HealthTrackerApi.Controllers
             return HttpStatusCode.NoContent;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost("delete/{id}")]
         public HttpStatusCode DeleteStudy(Guid id)
         {
@@ -77,7 +77,7 @@ namespace HealthTrackerApi.Controllers
             return HttpStatusCode.NoContent;
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("SimpleStudies/me")]
         public async Task<IList<SimpleStudy>> GetSimpleStudies()
         {
@@ -100,9 +100,9 @@ namespace HealthTrackerApi.Controllers
         }
 
 
-        [Authorize]
-        [HttpGet("{studyId}")]
-        public async Task<Study> GetStudies(Guid studyId)
+        //[Authorize]
+        [HttpGet("{studyId}/me")]
+        public async Task<Study> GetStudy(Guid studyId)
         {
             var userId = GetUserId();
             BusinessValidation.Study.UserCanViewStudy(userId, studyId);
