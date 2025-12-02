@@ -18,6 +18,7 @@
         public SimpleUser Owner { get; set; }
         public IList<string> Tags { get; set; }
         public IList<string> FocusTags { get; set; }
+        public IList<Book> Books { get; set; }
     }
 
     public class SimpleStudy: IStudy

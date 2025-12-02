@@ -65,3 +65,30 @@ create table UserPositionStats (
 	Mistakes bigint,
 	LastStudied datetime
 );
+
+create table Book (
+	Id uniqueIdentifier,
+	StudyId uniqueIdentifier,
+	Title varchar(50),
+	[Order] int
+);
+
+
+create table Chapter (
+	Id uniqueIdentifier,
+	BookId uniqueIdentifier,
+	Title varchar(50),
+	[Order] int
+);
+
+create table [Page] (
+	Id uniqueIdentifier,
+	ChapterId uniqueIdentifier,
+	Title varchar(50),
+	FEN varchar(150),
+	[Text] varchar(max),
+	[Order] int,
+	FastForward int,
+	Hide int,
+	Plans varchar(max)
+);

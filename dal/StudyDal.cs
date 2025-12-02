@@ -240,9 +240,9 @@ namespace ChessApi.dal
 
         private void New(Study study, SqlConnection connection)
         {
-            var query = $"insert into Study (id, title, summaryFen, description, positionId, perspective,tags,focus_tags,score,owner) " +
+            var query = $"insert into Study (id, title, summaryFen, description, positionId, perspective,tags,focus_tags,owner) " +
                 $"values ('{study.Id}',{study.Title.SqlOrNull()},'{study.SummaryFEN}','{study.Description}','{study.PositionId.Value}',{(int)study.Perspective}," 
-                + $" {string.Join(",", study.Tags).SqlOrNull()}, {string.Join(",", study.FocusTags).SqlOrNull()},{study.Score},{study.Owner.Id.SqlOrNull()});"
+                + $" {string.Join(",", study.Tags).SqlOrNull()}, {string.Join(",", study.FocusTags).SqlOrNull()},{study.Owner.Id.SqlOrNull()});"
                 + $"insert into StudyUser (studyId, userId) values ('{study.Id}','{study.Owner.Id}');"
                 + $"insert into UserStudyStats (studyId,userId,lastStudied,accuracy) values ('{study.Id}','{study.Owner.Id}','{DateTime.Now}',100);";
             using (var command = new SqlCommand(query, connection))

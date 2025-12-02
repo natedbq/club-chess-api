@@ -137,7 +137,7 @@ namespace chess.api.dal
             }
         }
 
-        public async Task<Guid> CreateClub(NewClubDto club)
+        public async Task<Guid> CreateClub(NewClubDto club, Guid ownerId)
         {
             var id = Guid.NewGuid();
             using (var connection = new SqlConnection(_sqlConnectionString))
@@ -148,13 +148,13 @@ namespace chess.api.dal
                     .Replace("@id", id.SqlOrNull())
                     .Replace("@name", club.Name.SqlOrNull())
                     .Replace("@description", club.Description.SqlOrNull())
-                    .Replace("@owner", club.OwnerId.SqlOrNull());
+                    .Replace("@owner", ownerId.SqlOrNull());
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.ExecuteNonQuery();
                 }
 
-                query = $"select username from [user] where id = '{club.OwnerId}';";
+                query = $"select username from [user] where id = '{ownerId}';";
                 using (var command = new SqlCommand(query, connection))
                 {
                     using (var reader = command.ExecuteReader())
