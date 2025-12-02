@@ -65,8 +65,8 @@ namespace chess.api.Controllers
         [HttpPost]
         public async Task<Guid> Club(NewClubDto model)
         {
-            model.OwnerId = GetUserId();
-            var clubId = await _clubDal.CreateClub(model);
+            var ownerId = GetUserId();
+            var clubId = await _clubDal.CreateClub(model, ownerId);
             return clubId;
         }
 
